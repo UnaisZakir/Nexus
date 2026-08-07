@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}CEO Command Center{% endblock %}
+{% block page_title %}👑 CEO Executive Admin Panel{% endblock %}
+
+{% block topbar_actions %}
+<a href="/communication" class="btn btn-primary btn-sm">💬 Open Comm Hub</a>
+{% endblock %}
+
+{% block content %}
+<div class="executive-header">
+  <div class="exec-title-group">
+    <h2>Enterprise Strategic Control & Executive Governance</h2>
+    <p>Welcome back, <strong>{{ user.username }}</strong>. Real-time enterprise financial health, capital sign-offs, and team governance.</p>
+  </div>
+  <div class="exec-badge ceo-badge">
+    <span>👑 Chief Executive Officer</span>
+  </div>
+</div>
+
+<!-- EXECUTIVE KPIS GRID -->
+<div class="kpi-grid">
+  <div class="kpi-card purple">
+    <div class="kpi-icon">💰</div>
+    <div class="kpi-content">
+      <div class="kpi-label">Enterprise Revenue</div>
+      <div class="kpi-value">${{ "{:,.2f}".format(total_revenue) }}</div>
+      <div class="kpi-sub positive">↑ Gross Enterprise Earnings</div>
+    </div>
+  </div>
+
+  <div class="kpi-card green">
+    <div class="kpi-icon">📊</div>
+    <div class="kpi-content">
+      <div class="kpi-label">Net Operating Profit</div>
+      <div class="kpi-value">${{ "{:,.2f}".format(net_profit) }}</div>
+      <div class="kpi-sub {% if net_profit >= 0 %}positive{% else %}negative{% endif %}">
+        {% if net_profit >= 0 %}Margin Positive{% else %}Loss Warning{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="kpi-card gold">
+    <div class="kpi-icon">🏛️</div>
+    <div class="kpi-content">
+      <div class="kpi-label">Estimated EBITDA</div>
+      <div class="kpi-value">${{ "{:,.2f}".format(ebitda_estimate) }}</div>
+      <div class="kpi-sub">Earnings Before Interest/Tax/Depr.</div>
+    </div>
+  </div>
+
+  <div class="kpi-card blue">
+    <div class="kpi-icon">🏦</div>
+    <div class="kpi-content">
+      <div class="kpi-label">Cash Reserve</div>
+      <div class="kpi-value">${{ "{:,.2f}".format(cash_reserve) }}</div>
+      <div class="kpi-sub positive">Available Liquidity</div>
+    </div>
+  </div>
+
+  <div class="kpi-card red">
+    <div class="kpi-icon">🔥</div>
+    <div class="kpi-content">
+      <div class="kpi-label">Monthly Burn Rate</div>
+      <div class="kpi-value">${{ "{:,.2f}".format(operating_burn) }}</div>
+      <div class="kpi-sub">Estimated Monthly Outflows</div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2-1" style="margin-top:1.5rem;">
+  <!-- APPROVAL QUEUE -->
+  <div class="card">
+    <div class="card-header">
+      <h3>⚡ Executive Approval & Proposal Queue</h3>
+      <span class="badge badge-warning">{{ pending_approvals|length }} Pending Sign-Offs</span>
+    </div>
+    <div class="card-body">
+      {% if pending_approvals %}
+      <div class="proposal-list">
+        {% for prop in pending_approvals %}
+        <div class="proposal-card">
+          <div class="proposal-header">
+            <div class="proposal-sender">
+              <span class="avatar-sm role-cfo-avatar">💼</span>
+              <div>
+                <strong>{{ prop.sender_username }}</strong> <span class="badge badge-cfo">CFO Proposal</span>
+                <div class="date-sm">{{ prop.created_at.strftime('%Y-%m-%d %H:%M') if prop.created_at else '' }}</div>
+              </div>
+            </div>
+            <span class="badge badge-urgency-{{ prop.urgency|lower }}">{{ prop.urgency }}</span>
+          </div>
+          <div class="proposal-title">{{ prop.subject }}</div>
+          <div class="proposal-body">{{ prop.message }}</div>
+          {% if prop.amount > 0 %}
+          <div class="proposal-amount">Required Capital: <strong>${{ "{:,.2f}".format(prop.amount) }}</strong></div>
+          {% endif %}
+          <div class="proposal-actions">
+            <form action="/ceo/approvals" method="POST" style="display:inline;">
+              <input type="hidden" name="message_id" value="{{ prop.id }}">
+              <input type="hidden" name="action" value="Approved">
+              <button type="submit" class="btn btn-success btn-sm">✔ Approve Budget</button>
+            </form>
+            <form action="/ceo/approvals" method="POST" style="display:inline;">
+              <input type="hidden" name="message_id" value="{{ prop.id }}">
+              <input type="hidden" name="action" value="Declined">
+              <button type="submit" class="btn btn-danger btn-sm">✖ Decline</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">✅</div>
+        <p>All financial proposals and capital requests have been actioned!</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- DIRECT STRATEGIC DIRECTIVE COMPOSER -->
+  <div class="card">
+    <div class="card-header">
+      <h3>📢 Issue Strategic Directive</h3>
+    </div>
+    <div class="card-body">
+      <form action="/api/communication/send" method="POST">
+        <div class="form-group">
+          <label class="form-label">Recipient Target</label>
+          <select class="form-control" name="recipient_role">
+            <option value="ALL">📢 All Executive Team (CFO & Accountant)</option>
+            <option value="CFO">💼 Chief Financial Officer (CFO)</option>
+            <option value="Accountant">📊 Senior Accountant</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Directive Subject</label>
+          <input class="form-control" name="subject" placeholder="e.g., Q4 Target Operating Budget" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Directive Details</label>
+          <textarea class="form-control" name="message" rows="4" placeholder="Type executive directive or thought..." required></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select class="form-control" name="category">
+              <option value="Strategic Directive" selected>Strategic Directive</option>
+              <option value="General Exchange">General Exchange</option>
+              <option value="Audit Inquiry">Audit Inquiry</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Urgency Level</label>
+            <select class="form-control" name="urgency">
+              <option value="Normal">Normal</option>
+              <option value="Important" selected>Important</option>
+              <option value="Urgent">Urgent</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">Broadcast Directive →</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- USER & EXECUTIVE ROLE MANAGEMENT -->
+<div class="card" style="margin-top:1.5rem;">
+  <div class="card-header">
+    <h3>👥 Executive Team & Role Management</h3>
+    <span class="badge badge-info">Multi-Auth Role Control</span>
+  </div>
+  <div class="card-body">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Email</th>
+          <th>Company</th>
+          <th>Active Role</th>
+          <th>Plan</th>
+          <th>Role Management</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for member in team_members %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+              <span class="user-avatar-sm role-{{ (member.role or 'Accountant')|lower }}">
+                {{ (member.username or 'U')[0]|upper }}
+              </span>
+              <strong>{{ member.username }}</strong>
+            </div>
+          </td>
+          <td>{{ member.email }}</td>
+          <td>{{ member.company_name }}</td>
+          <td>
+            <span class="role-badge-pill role-{{ (member.role or 'Accountant')|lower }}">
+              {% if member.role == 'CEO' %}👑 CEO{% elif member.role == 'CFO' %}💼 CFO{% else %}📊 Accountant{% endif %}
+            </span>
+          </td>
+          <td>{{ member.plan|capitalize }}</td>
+          <td>
+            <form action="/ceo/users/role" method="POST" style="display:flex;gap:0.5rem;align-items:center;">
+              <input type="hidden" name="target_user_id" value="{{ member.id }}">
+              <select name="new_role" class="form-control form-control-sm" style="width:130px;">
+                <option value="CEO" {% if member.role == 'CEO' %}selected{% endif %}>👑 CEO</option>
+                <option value="CFO" {% if member.role == 'CFO' %}selected{% endif %}>💼 CFO</option>
+                <option value="Accountant" {% if member.role == 'Accountant' or not member.role %}selected{% endif %}>📊 Accountant</option>
+              </select>
+              <button type="submit" class="btn btn-secondary btn-sm">Update Role</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- RECENT EXECUTIVE THOUGHT STREAM -->
+<div class="card" style="margin-top:1.5rem;">
+  <div class="card-header">
+    <h3>💬 Executive Thought Exchange Board</h3>
+    <a href="/communication" class="btn btn-secondary btn-sm">View All Discussions</a>
+  </div>
+  <div class="card-body">
+    <div class="thought-stream">
+      {% for item in thoughts %}
+      <div class="thought-card category-{{ item.category|lower|replace(' ', '-') }}">
+        <div class="thought-meta">
+          <span class="role-badge-pill role-{{ item.sender_role|lower }}">
+            {% if item.sender_role == 'CEO' %}👑 CEO{% elif item.sender_role == 'CFO' %}💼 CFO{% else %}📊 Accountant{% endif %}
+            {{ item.sender_username }}
+          </span>
+          <span class="arrow">➔</span>
+          <span class="recipient-tag">To: {{ item.recipient_role }}</span>
+          <span class="category-tag">{{ item.category }}</span>
+          <span class="time-tag">{{ item.created_at.strftime('%Y-%m-%d %H:%M') if item.created_at else '' }}</span>
+        </div>
+        <div class="thought-subject">{{ item.subject }}</div>
+        <div class="thought-text">{{ item.message }}</div>
+        {% if item.status %}
+        <div class="thought-status status-{{ item.status|lower }}">
+          Status: <strong>{{ item.status }}</strong>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

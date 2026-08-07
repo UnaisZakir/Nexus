@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Allow: /auth
+Allow: /ceo
+Allow: /cfo
+Allow: /communication
+Allow: /accounts
+Allow: /journal
+Allow: /invoices
+Allow: /reconciliation
+Allow: /reports
+Allow: /payroll
+Allow: /ai
+Disallow: /api/
+
+Sitemap: http://localhost:8000/sitemap.xml

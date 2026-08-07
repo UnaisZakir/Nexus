@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}Executive Communication Center{% endblock %}
+{% block page_title %}💬 Executive Tri-Party Communication Hub{% endblock %}
+
+{% block content %}
+<div class="executive-header comm-header-bg">
+  <div class="exec-title-group">
+    <h2>CEO ↔ CFO ↔ Accountant Strategic Exchange Board</h2>
+    <p>Seamless communication, thought exchange, audit notes, and capital proposals between company leadership.</p>
+  </div>
+  <div class="exec-badge comm-badge">
+    <span>
+      {% if user.role == 'CEO' %}👑 CEO Persona{% elif user.role == 'CFO' %}💼 CFO Persona{% else %}📊 Accountant Persona{% endif %}
+    </span>
+  </div>
+</div>
+
+<div class="grid-1-2" style="margin-top:1.5rem;">
+  <!-- MESSAGE COMPOSER -->
+  <div class="card">
+    <div class="card-header">
+      <h3>✍️ Post New Executive Thought / Proposal</h3>
+    </div>
+    <div class="card-body">
+      <form action="/api/communication/send" method="POST" id="comm-form">
+        <div class="form-group">
+          <label class="form-label">Recipient Target</label>
+          <select class="form-control" name="recipient_role">
+            <option value="ALL">📢 All Executive Team (CEO, CFO, Accountant)</option>
+            <option value="CEO" {% if user.role != 'CEO' %}selected{% endif %}>👑 Chief Executive Officer (CEO)</option>
+            <option value="CFO" {% if user.role == 'CEO' %}selected{% endif %}>💼 Chief Financial Officer (CFO)</option>
+            <option value="Accountant">📊 Senior Accountant</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Subject / Title</label>
+          <input class="form-control" name="subject" placeholder="e.g., Q3 Reserve Allocation & Audit Review" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Category</label>
+            <select class="form-control" name="category" id="comm-category" onchange="toggleAmountField()">
+              <option value="General Exchange" selected>General Exchange</option>
+              <option value="Strategic Directive">Strategic Directive</option>
+              <option value="Financial Proposal">Financial Proposal</option>
+              <option value="Audit Inquiry">Audit Inquiry</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Urgency Level</label>
+            <select class="form-control" name="urgency">
+              <option value="Normal">Normal</option>
+              <option value="Important" selected>Important</option>
+              <option value="Urgent">Urgent</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" id="amount-field-group" style="display:none;">
+          <label class="form-label">Required Proposal Budget ($)</label>
+          <input type="number" step="0.01" class="form-control" name="amount" placeholder="0.00">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Message Content & Strategic Notes</label>
+          <textarea class="form-control" name="message" rows="5" placeholder="Express your thought, strategy proposal, or inquiry details..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width:100%;">Post Thought / Directive →</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- THOUGHT EXCHANGE STREAM -->
+  <div class="card">
+    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+      <h3>💬 Live Executive Discussion Feed</h3>
+      <div class="filter-tabs">
+        <button class="filter-btn active" onclick="filterCategory('all', this)">All</button>
+        <button class="filter-btn" onclick="filterCategory('Strategic Directive', this)">Directives</button>
+        <button class="filter-btn" onclick="filterCategory('Financial Proposal', this)">Proposals</button>
+        <button class="filter-btn" onclick="filterCategory('Audit Inquiry', this)">Audit</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="comm-feed" id="comm-feed">
+        {% for msg in messages %}
+        <div class="comm-card cat-{{ msg.category|lower|replace(' ', '-') }}" data-category="{{ msg.category }}">
+          <div class="comm-header">
+            <div class="comm-user">
+              <span class="role-badge-pill role-{{ msg.sender_role|lower }}">
+                {% if msg.sender_role == 'CEO' %}👑 CEO{% elif msg.sender_role == 'CFO' %}💼 CFO{% else %}📊 Accountant{% endif %}
+              </span>
+              <strong>{{ msg.sender_username }}</strong>
+              <span class="to-text">➔ To: <strong>{{ msg.recipient_role }}</strong></span>
+            </div>
+            <div class="comm-right-meta">
+              <span class="badge badge-urgency-{{ msg.urgency|lower }}">{{ msg.urgency }}</span>
+              <span class="badge status-{{ msg.status|lower }}">{{ msg.status }}</span>
+            </div>
+          </div>
+
+          <div class="comm-subject">{{ msg.subject }}</div>
+          <div class="comm-body">{{ msg.message }}</div>
+
+          {% if msg.amount > 0 %}
+          <div class="comm-amount-pill">
+            💵 Financial Budget Value: <strong>${{ "{:,.2f}".format(msg.amount) }}</strong>
+          </div>
+          {% endif %}
+
+          <div class="comm-footer">
+            <span class="date-sm">{{ msg.created_at.strftime('%Y-%m-%d %H:%M') if msg.created_at else '' }}</span>
+
+            <!-- Action buttons depending on active persona -->
+            <div class="comm-actions">
+              {% if msg.category == 'Financial Proposal' and msg.status == 'Pending' and user.role == 'CEO' %}
+              <form action="/api/communication/action" method="POST" style="display:inline;">
+                <input type="hidden" name="message_id" value="{{ msg.id }}">
+                <input type="hidden" name="action" value="Approved">
+                <button type="submit" class="btn btn-success btn-xs">✔ Approve</button>
+              </form>
+              <form action="/api/communication/action" method="POST" style="display:inline;">
+                <input type="hidden" name="message_id" value="{{ msg.id }}">
+                <input type="hidden" name="action" value="Declined">
+                <button type="submit" class="btn btn-danger btn-xs">✖ Decline</button>
+              </form>
+              {% elif msg.status == 'Pending' %}
+              <form action="/api/communication/action" method="POST" style="display:inline;">
+                <input type="hidden" name="message_id" value="{{ msg.id }}">
+                <input type="hidden" name="action" value="Acknowledged">
+                <button type="submit" class="btn btn-secondary btn-xs">✔ Acknowledge</button>
+              </form>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleAmountField() {
+  const cat = document.getElementById('comm-category').value;
+  document.getElementById('amount-field-group').style.display = cat === 'Financial Proposal' ? 'block' : 'none';
+}
+
+function filterCategory(cat, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  
+  const cards = document.querySelectorAll('.comm-card');
+  cards.forEach(card => {
+    if (cat === 'all' || card.dataset.category === cat) {
+      card.style.display = 'block';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+</script>
+{% endblock %}

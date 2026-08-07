@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}Contacts{% endblock %}
+{% block page_title %}Customers &amp; Suppliers{% endblock %}
+{% block meta_desc %}Manage your customers and suppliers in Nexus ERP — one central contact hub.{% endblock %}
+
+{% block topbar_actions %}
+  <button class="btn btn-primary btn-sm" onclick="openModal('newContactModal')">+ New Contact</button>
+{% endblock %}
+
+{% block content %}
+<!-- Summary KPIs -->
+<div class="kpi-grid" style="grid-template-columns: repeat(3,1fr);">
+  <div class="kpi-card blue">
+    <div class="kpi-label">Total Contacts</div>
+    <div class="kpi-value">{{ contacts|length }}</div>
+    <div class="kpi-sub">All customers & suppliers</div>
+  </div>
+  <div class="kpi-card green">
+    <div class="kpi-label">Customers</div>
+    <div class="kpi-value">{{ customers|length }}</div>
+    <div class="kpi-sub">Active sales contacts</div>
+  </div>
+  <div class="kpi-card purple">
+    <div class="kpi-label">Suppliers</div>
+    <div class="kpi-value">{{ suppliers|length }}</div>
+    <div class="kpi-sub">Active purchasing contacts</div>
+  </div>
+</div>
+
+<!-- Contacts Table -->
+<div class="table-wrapper">
+  <div class="table-header">
+    <span class="table-title">👤 All Contacts</span>
+    <div style="display:flex;gap:0.5rem;align-items:center;">
+      <select class="form-control" id="type-filter" style="width:140px;" onchange="filterContacts()">
+        <option value="">All Types</option>
+        <option value="customer">Customers</option>
+        <option value="supplier">Suppliers</option>
+      </select>
+      <input class="form-control" id="contact-search" placeholder="🔍 Search..." style="width:200px;" oninput="filterContacts()">
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Address</th>
+        <th style="text-align:right;">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="contacts-body">
+    {% for c in contacts %}
+    <tr data-type="{{ c.contact_type }}">
+      <td style="font-weight:600;">{{ c.name }}</td>
+      <td>
+        {% if c.contact_type == 'customer' %}
+          <span class="badge badge-blue">Customer</span>
+        {% else %}
+          <span class="badge badge-purple">Supplier</span>
+        {% endif %}
+      </td>
+      <td style="color:var(--text-2);">{{ c.email or '—' }}</td>
+      <td style="color:var(--text-2);">{{ c.phone or '—' }}</td>
+      <td style="color:var(--text-2);font-size:0.8rem;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ c.address or '—' }}</td>
+      <td style="text-align:right;">
+        <button class="btn btn-danger btn-sm" onclick="deleteContact({{ c.id }}, '{{ c.name }}')">🗑 Remove</button>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">👤</div><p>No contacts yet. Add your first customer or supplier!</p></div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- New Contact Modal -->
+<div class="modal-overlay" id="newContactModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">👤 Add New Contact</span>
+      <button class="modal-close" onclick="closeModal('newContactModal')">×</button>
+    </div>
+    <form id="contact-form">
+      <div class="form-group">
+        <label class="form-label">Contact Type</label>
+        <div style="display:flex;gap:0.75rem;">
+          <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;padding:0.6rem 1rem;border:2px solid var(--border);border-radius:var(--radius-sm);flex:1;transition:all 0.2s;" id="type-customer-label">
+            <input type="radio" name="contact_type" value="customer" id="type-customer" checked onchange="updateTypeLabel()" style="accent-color:var(--accent);">
+            <span>🧑‍💼 Customer</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;padding:0.6rem 1rem;border:2px solid var(--border);border-radius:var(--radius-sm);flex:1;transition:all 0.2s;" id="type-supplier-label">
+            <input type="radio" name="contact_type" value="supplier" id="type-supplier" onchange="updateTypeLabel()" style="accent-color:var(--accent-3);">
+            <span>🏭 Supplier</span>
+          </label>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Full Name / Company *</label>
+          <input class="form-control" name="name" placeholder="Contact or company name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input class="form-control" type="email" name="email" placeholder="billing@company.com">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Phone Number</label>
+          <input class="form-control" name="phone" placeholder="+1 (555) 000-0000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Address</label>
+          <input class="form-control" name="address" placeholder="City, Country">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;" id="contact-submit-btn">Add Contact</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Highlight selected type label
+function updateTypeLabel() {
+  const customerLabel = document.getElementById('type-customer-label');
+  const supplierLabel = document.getElementById('type-supplier-label');
+  const isCustomer = document.getElementById('type-customer').checked;
+  customerLabel.style.borderColor = isCustomer ? 'var(--accent)' : 'var(--border)';
+  customerLabel.style.background  = isCustomer ? 'rgba(37,99,235,0.06)' : '';
+  supplierLabel.style.borderColor = !isCustomer ? 'var(--accent-3)' : 'var(--border)';
+  supplierLabel.style.background  = !isCustomer ? 'rgba(124,58,237,0.06)' : '';
+}
+// Initialize
+updateTypeLabel();
+
+function filterContacts() {
+  const query = document.getElementById('contact-search').value.toLowerCase();
+  const type  = document.getElementById('type-filter').value;
+  document.querySelectorAll('#contacts-body tr[data-type]').forEach(row => {
+    const matchType = !type || row.dataset.type === type;
+    const matchQ    = row.textContent.toLowerCase().includes(query);
+    row.style.display = (matchType && matchQ) ? '' : 'none';
+  });
+}
+
+document.getElementById('contact-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('contact-submit-btn');
+  btn.disabled = true; btn.textContent = 'Adding...';
+  const fd = new FormData(e.target);
+  const r  = await fetch('/api/contacts', { method: 'POST', body: fd });
+  const d  = await r.json();
+  if (d.success) {
+    toast(d.message, 'success');
+    closeModal('newContactModal');
+    setTimeout(() => location.reload(), 700);
+  } else {
+    toast(d.error || 'Error adding contact', 'error');
+    btn.disabled = false; btn.textContent = 'Add Contact';
+  }
+});
+
+async function deleteContact(id, name) {
+  if (!confirm(`Remove "${name}" from contacts?`)) return;
+  const r = await fetch(`/api/contacts/${id}`, { method: 'DELETE' });
+  const d = await r.json();
+  if (d.success) {
+    toast(d.message, 'success');
+    setTimeout(() => location.reload(), 600);
+  } else {
+    toast(d.error || 'Error', 'error');
+  }
+}
+</script>
+{% endblock %}

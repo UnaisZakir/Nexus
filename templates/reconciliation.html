@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Bank Reconciliation{% endblock %}
+{% block page_title %}Bank Reconciliation{% endblock %}
+
+{% block topbar_actions %}
+  <button class="btn btn-primary btn-sm" onclick="openModal('importModal')">⬆ Import Statement</button>
+  <button class="btn btn-success btn-sm" id="auto-reconcile-btn" onclick="runAutoReconcile()">🔄 Auto Reconcile</button>
+{% endblock %}
+
+{% block content %}
+<div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);">
+  <div class="kpi-card green">
+    <div class="kpi-label">Matched</div>
+    <div class="kpi-value" id="count-matched">{{ matched }}</div>
+    <div class="kpi-sub">Auto or manually matched</div>
+  </div>
+  <div class="kpi-card gold">
+    <div class="kpi-label">Suggested</div>
+    <div class="kpi-value" id="count-suggested">{{ suggested }}</div>
+    <div class="kpi-sub">Requires review</div>
+  </div>
+  <div class="kpi-card red">
+    <div class="kpi-label">Unmatched</div>
+    <div class="kpi-value" id="count-unmatched">{{ unmatched }}</div>
+    <div class="kpi-sub">No match found yet</div>
+  </div>
+</div>
+
+<div class="table-wrapper">
+  <div class="table-header">
+    <span class="table-title">🏦 Bank Statement Transactions</span>
+    <input class="form-control" id="bank-search" placeholder="🔍 Filter..." style="width:200px;" oninput="filterTable('bank-search','bank-body')">
+  </div>
+  <table>
+    <thead><tr><th>Date</th><th>Description</th><th>Reference</th><th>Amount</th><th>Status</th></tr></thead>
+    <tbody id="bank-body">
+    {% for txn in transactions %}
+    <tr class="row-{{ txn.status }}">
+      <td>{{ txn.date }}</td>
+      <td>{{ txn.description or '—' }}</td>
+      <td style="color:var(--text-3);">{{ txn.reference or '—' }}</td>
+      <td style="font-weight:600;color:{% if txn.amount >= 0 %}var(--success){% else %}var(--danger){% endif %};">
+        {% if txn.amount >= 0 %}+{% endif %}${{ "%.2f"|format(txn.amount|abs) }}
+      </td>
+      <td>
+        {% if txn.status == 'matched' %}<span class="badge badge-green">✓ Matched</span>
+        {% elif txn.status == 'suggested' %}<span class="badge badge-yellow">⚡ Suggested</span>
+        {% else %}<span class="badge badge-red">✕ Unmatched</span>{% endif %}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🏦</div><p>No transactions imported yet. Upload a bank statement to begin.</p></div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Import Modal -->
+<div class="modal-overlay" id="importModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">⬆ Import Bank Statement</span>
+      <button class="modal-close" onclick="closeModal('importModal')">×</button>
+    </div>
+    <div class="upload-area" id="upload-area" onclick="document.getElementById('bank-file').click()">
+      <div class="upload-icon">📂</div>
+      <div class="upload-text"><strong>Click to upload</strong> or drag & drop</div>
+      <div class="upload-text" style="margin-top:0.25rem;font-size:0.75rem;">Supports CSV and Excel (.xlsx). Must have Date and Amount columns.</div>
+      <input type="file" id="bank-file" accept=".csv,.xlsx" style="display:none;" onchange="handleFileSelect(this)">
+    </div>
+    <div id="file-preview" style="display:none;margin-top:1rem;">
+      <div style="display:flex;align-items:center;gap:0.75rem;padding:0.75rem;background:var(--surface);border-radius:var(--radius-sm);">
+        <span style="font-size:1.5rem;">📄</span>
+        <div><div id="file-name" style="font-weight:600;"></div><div id="file-size" style="font-size:0.75rem;color:var(--text-3);"></div></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:1rem;" id="upload-btn" onclick="uploadFile()">Import Transactions</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let selectedFile = null;
+
+function handleFileSelect(input) {
+  selectedFile = input.files[0];
+  if (!selectedFile) return;
+  document.getElementById('file-name').textContent = selectedFile.name;
+  document.getElementById('file-size').textContent = (selectedFile.size / 1024).toFixed(1) + ' KB';
+  document.getElementById('file-preview').style.display = 'block';
+}
+
+// Drag & drop
+const area = document.getElementById('upload-area');
+area.addEventListener('dragover', (e) => { e.preventDefault(); area.classList.add('dragover'); });
+area.addEventListener('dragleave', () => area.classList.remove('dragover'));
+area.addEventListener('drop', (e) => {
+  e.preventDefault(); area.classList.remove('dragover');
+  selectedFile = e.dataTransfer.files[0];
+  document.getElementById('file-name').textContent = selectedFile.name;
+  document.getElementById('file-size').textContent = (selectedFile.size / 1024).toFixed(1) + ' KB';
+  document.getElementById('file-preview').style.display = 'block';
+});
+
+async function uploadFile() {
+  if (!selectedFile) return;
+  const btn = document.getElementById('upload-btn');
+  btn.disabled = true; btn.textContent = 'Uploading...';
+  const fd = new FormData();
+  fd.append('file', selectedFile);
+  const r = await fetch('/api/bank/import', { method:'POST', body: fd });
+  const d = await r.json();
+  if (d.success) { toast(d.message, 'success'); closeModal('importModal'); setTimeout(() => location.reload(), 800); }
+  else { toast(d.error || 'Import failed', 'error'); btn.disabled = false; btn.textContent = 'Import Transactions'; }
+}
+
+async function runAutoReconcile() {
+  const btn = document.getElementById('auto-reconcile-btn');
+  btn.disabled = true; btn.textContent = '🔄 Reconciling...';
+  const r = await fetch('/api/bank/reconcile', { method:'POST' });
+  const d = await r.json();
+  toast(d.message, d.success ? 'success' : 'error');
+  setTimeout(() => location.reload(), 1000);
+}
+</script>
+{% endblock %}

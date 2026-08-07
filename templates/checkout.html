@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Subscription & Payment Gateway{% endblock %}
+{% block page_title %}💳 SaaS Subscription & Payment Portal{% endblock %}
+
+{% block content %}
+<div class="executive-header checkout-header-bg">
+  <div class="exec-title-group">
+    <h2>Enterprise SaaS Billing & Payment Gateway</h2>
+    <p>Manage your 30-Day Free Trial, select subscription tiers, and upgrade via secure Credit Card or Stripe checkout.</p>
+  </div>
+  <div class="exec-badge checkout-badge">
+    <span>
+      {% if user.subscription_status == 'active' %}⭐ Active Subscription{% else %}🎁 30-Day Free Trial{% endif %}
+    </span>
+  </div>
+</div>
+
+{% if request.query_params.get('success') %}
+<div class="alert alert-success" style="background:#d1fae5;color:#065f46;padding:1rem;border-radius:10px;margin-bottom:1.5rem;border:1px solid #a7f3d0;">
+  ✔ <strong>Payment Successful!</strong> Your subscription has been upgraded to the <strong>{{ user.plan|capitalize }}</strong> plan. Pro features unlocked!
+</div>
+{% endif %}
+
+<!-- ACTIVE LICENSE & TRIAL CARD -->
+<div class="card" style="margin-bottom:1.5rem;">
+  <div class="card-header">
+    <h3>📊 Active License Status</h3>
+    <span class="badge badge-primary">{{ user.plan|capitalize }} Tier</span>
+  </div>
+  <div class="card-body" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+    <div>
+      <div style="font-size:1.1rem;font-weight:700;color:var(--text-1);">
+        Current Plan: <span style="color:var(--accent);">{{ user.plan|capitalize }} License</span>
+      </div>
+      <div style="font-size:0.85rem;color:var(--text-2);margin-top:0.25rem;">
+        Status: <strong>{{ user.subscription_status|capitalize }}</strong> · 
+        {% if user.subscription_status == 'trialing' %}
+          <span style="color:var(--gold);">{{ user.trial_days_left or 29 }} Days remaining on 30-day Free Trial</span>
+        {% else %}
+          <span style="color:var(--success);">Unlimited Active Access</span>
+        {% endif %}
+      </div>
+    </div>
+    <div style="display:flex;gap:0.75rem;">
+      <a href="#plans-section" class="btn btn-primary">⚡ Upgrade Plan Now</a>
+    </div>
+  </div>
+</div>
+
+<!-- PLAN SELECTION GRID -->
+<div id="plans-section" class="card" style="margin-bottom:1.5rem;">
+  <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+    <h3>💎 Pakistani Standard Market Subscription Tiers</h3>
+    <span class="badge badge-success">🇵🇰 PKR Rates Enabled</span>
+  </div>
+  <div class="card-body">
+    <div class="grid-3">
+      <!-- Starter Plan -->
+      <div class="plan-pricing-card {% if user.plan == 'starter' %}active-plan{% endif %}">
+        <div class="plan-pricing-icon">🔵</div>
+        <div class="plan-pricing-name">Starter Plan (Dukan / Micro)</div>
+        <div class="plan-pricing-price">Rs. 1,500 <span>/ month ($5.50)</span></div>
+        <div class="plan-pricing-desc">Ideal for small shops, freelancers, and sole proprietors in Pakistan.</div>
+        <ul class="plan-features">
+          <li>✔ Double-Entry Ledger & Daybook</li>
+          <li>✔ Sales Invoicing & GST Tax Receipt</li>
+          <li>✔ Bank & Cash Khata Reconciliation</li>
+          <li>✔ 1 User Access</li>
+        </ul>
+        <button onclick="openPaymentModal('starter', 1500, 'PKR')" class="btn btn-outline" style="width:100%;">Select Starter (Rs. 1,500) →</button>
+      </div>
+
+      <!-- Partnership Plan -->
+      <div class="plan-pricing-card featured-plan {% if user.plan == 'partnership' %}active-plan{% endif %}">
+        <div class="plan-tag">POPULAR PAKISTAN</div>
+        <div class="plan-pricing-icon">🟣</div>
+        <div class="plan-pricing-name">Partnership Plan (SMB)</div>
+        <div class="plan-pricing-price">Rs. 3,500 <span>/ month ($12.50)</span></div>
+        <div class="plan-pricing-desc">Designed for Pakistani trading firms, SMBs, and partnerships.</div>
+        <ul class="plan-features">
+          <li>✔ Profit & Loss, Trial Balance Reports</li>
+          <li>✔ Employee Payroll & Tax Deductions</li>
+          <li>✔ Fixed Asset Depreciation Schedule</li>
+          <li>✔ Up to 5 Team Users</li>
+        </ul>
+        <button onclick="openPaymentModal('partnership', 3500, 'PKR')" class="btn btn-primary" style="width:100%;">Upgrade Partnership (Rs. 3,500) →</button>
+      </div>
+
+      <!-- Corporate Plan -->
+      <div class="plan-pricing-card {% if user.plan == 'corporate' %}active-plan{% endif %}">
+        <div class="plan-pricing-icon">🟡</div>
+        <div class="plan-pricing-name">Corporate Plan (Enterprise)</div>
+        <div class="plan-pricing-price">Rs. 8,500 <span>/ month ($30.00)</span></div>
+        <div class="plan-pricing-desc">Full enterprise solution for PLCs, CEO & CFO suite, and IFRS.</div>
+        <ul class="plan-features">
+          <li>✔ 👑 CEO & 💼 CFO Admin Panels</li>
+          <li>✔ 💬 Tri-Party Executive Thought Hub</li>
+          <li>✔ AI Accountant Unlimited Queries</li>
+          <li>✔ Unlimited Team Users</li>
+        </ul>
+        <button onclick="openPaymentModal('corporate', 8500, 'PKR')" class="btn btn-primary" style="width:100%;">Upgrade Corporate (Rs. 8,500) →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TRANSACTION HISTORY -->
+<div class="card">
+  <div class="card-header">
+    <h3>📜 Payment Gateway Transaction Receipts</h3>
+  </div>
+  <div class="card-body">
+    {% if payments %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Receipt Ref</th>
+          <th>Plan Tier</th>
+          <th>Amount Paid</th>
+          <th>Gateway</th>
+          <th>Status</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tx in payments %}
+        <tr>
+          <td><code>{{ tx.transaction_ref }}</code></td>
+          <td><strong>{{ tx.plan_name|capitalize }}</strong></td>
+          <td>
+            {% if tx.currency == 'PKR' %}
+              Rs. {{ "{:,.0f}".format(tx.amount) }}
+            {% else %}
+              ${{ "{:,.2f}".format(tx.amount) }} {{ tx.currency }}
+            {% endif %}
+          </td>
+          <td><span class="badge badge-info">{{ tx.gateway }}</span></td>
+          <td><span class="badge status-approved">{{ tx.status|capitalize }}</span></td>
+          <td class="date-sm">{{ tx.created_at.strftime('%Y-%m-%d %H:%M') if tx.created_at else '' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">💳</div>
+      <p>No billing transactions recorded yet. You are currently enjoying your 30-Day Free Trial!</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- LOCALIZED PAKISTANI PAYMENT GATEWAY CHECKOUT MODAL -->
+<div class="modal-overlay" id="payment-modal" style="display:none;">
+  <div class="modal-content" style="max-width:500px;">
+    <div class="modal-header">
+      <h3 id="modal-plan-title">💳 Secure Payment Gateway Checkout</h3>
+      <button class="modal-close" onclick="closePaymentModal()">×</button>
+    </div>
+    <form action="/api/payment/process" method="POST" id="checkout-form">
+      <input type="hidden" name="plan_name" id="modal-plan-name" value="partnership">
+      <input type="hidden" name="amount" id="modal-plan-amount" value="3500">
+
+      <div class="form-group">
+        <label class="form-label">Select Payment Channel</label>
+        <select class="form-control" name="gateway" id="gateway-select" onchange="togglePaymentFields(this.value)">
+          <option value="JazzCash" selected>📱 JazzCash Mobile Wallet / QR</option>
+          <option value="EasyPaisa">📱 EasyPaisa Mobile Account</option>
+          <option value="BankTransfer">🏦 Pakistani Bank Transfer (IBFT / Meezan / HBL)</option>
+          <option value="CreditCard">💳 Visa / Mastercard Credit/Debit Card</option>
+        </select>
+      </div>
+
+      <!-- Wallet / Mobile Field -->
+      <div id="mobile-wallet-fields" class="form-group">
+        <label class="form-label">JazzCash / EasyPaisa Account Number</label>
+        <input class="form-control" name="card_name" placeholder="0300 1234567" required>
+      </div>
+
+      <!-- Bank Transfer Details -->
+      <div id="bank-transfer-info" style="display:none;background:var(--surface-2);padding:0.85rem;border-radius:8px;margin-bottom:1rem;font-size:0.82rem;">
+        <div><strong>Bank Name:</strong> Meezan Bank Limited</div>
+        <div><strong>Account Title:</strong> Nexus ERP Enterprise Systems</div>
+        <div><strong>IBAN:</strong> PK36 MEZN 0001 0203 0405 0607</div>
+        <div style="margin-top:0.4rem;color:var(--text-3);">Transfer the amount via 1LINK / IBFT and enter your Transaction Ref (TID) below.</div>
+      </div>
+
+      <!-- Credit Card Fields -->
+      <div id="credit-card-fields" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">Card Number</label>
+          <input class="form-control" name="card_number" placeholder="4242 •••• •••• 4242" maxlength="19">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Expiry Date</label>
+            <input class="form-control" name="card_exp" placeholder="MM / YY" maxlength="7">
+          </div>
+          <div class="form-group">
+            <label class="form-label">CVC Code</label>
+            <input class="form-control" type="password" name="card_cvc" placeholder="123" maxlength="4">
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--surface-2);padding:0.75rem;border-radius:8px;margin-bottom:1rem;font-size:0.82rem;color:var(--text-2);">
+        🔒 Encrypted SSL Payment Gateway. Instant plan activation upon confirmation.
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;" id="checkout-btn">
+        Pay <span id="modal-currency-symbol">Rs.</span><span id="modal-amount-display">3,500</span> & Activate Plan →
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+function openPaymentModal(plan, amount, currency) {
+  document.getElementById('modal-plan-name').value = plan;
+  document.getElementById('modal-plan-amount').value = amount;
+  
+  if (currency === 'PKR') {
+    document.getElementById('modal-currency-symbol').innerText = 'Rs. ';
+    document.getElementById('modal-amount-display').innerText = Number(amount).toLocaleString();
+    document.getElementById('modal-plan-title').innerText = '💳 Upgrade to ' + plan.toUpperCase() + ' Plan (Rs. ' + Number(amount).toLocaleString() + ')';
+  } else {
+    document.getElementById('modal-currency-symbol').innerText = '$';
+    document.getElementById('modal-amount-display').innerText = amount.toFixed(2);
+    document.getElementById('modal-plan-title').innerText = '💳 Upgrade to ' + plan.toUpperCase() + ' Plan ($' + amount.toFixed(2) + ')';
+  }
+  
+  document.getElementById('payment-modal').style.display = 'flex';
+}
+
+function closePaymentModal() {
+  document.getElementById('payment-modal').style.display = 'none';
+}
+
+function togglePaymentFields(gateway) {
+  const walletFields = document.getElementById('mobile-wallet-fields');
+  const bankInfo = document.getElementById('bank-transfer-info');
+  const cardFields = document.getElementById('credit-card-fields');
+
+  if (gateway === 'CreditCard') {
+    walletFields.style.display = 'none';
+    bankInfo.style.display = 'none';
+    cardFields.style.display = 'block';
+  } else if (gateway === 'BankTransfer') {
+    walletFields.style.display = 'block';
+    bankInfo.style.display = 'block';
+    cardFields.style.display = 'none';
+  } else {
+    // JazzCash or EasyPaisa
+    walletFields.style.display = 'block';
+    bankInfo.style.display = 'none';
+    cardFields.style.display = 'none';
+  }
+}
+</script>
+{% endblock %}
+

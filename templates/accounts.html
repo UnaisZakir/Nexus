@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Chart of Accounts{% endblock %}
+{% block page_title %}Chart of Accounts{% endblock %}
+
+{% block topbar_actions %}
+  <button class="btn btn-primary btn-sm" onclick="openModal('newAccountModal')">+ New Account</button>
+{% endblock %}
+
+{% block content %}
+
+<!-- Summary by Type -->
+<div class="kpi-grid" style="grid-template-columns: repeat(5,1fr);">
+  {% set types = [('Asset','blue'),('Liability','red'),('Equity','purple'),('Revenue','green'),('Expense','gold')] %}
+  {% for atype, color in types %}
+  <div class="kpi-card {{ color }}">
+    <div class="kpi-label">{{ atype }}s</div>
+    <div class="kpi-value" style="font-size:1.4rem;">${{ "%.2f"|format(accounts|selectattr('account_type','equalto',atype)|map(attribute='balance')|sum) }}</div>
+    <div class="kpi-sub">{{ accounts|selectattr('account_type','equalto',atype)|list|length }} accounts</div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="table-wrapper">
+  <div class="table-header">
+    <span class="table-title">🗂️ All Accounts ({{ accounts|length }} total)</span>
+    <div style="display:flex;gap:0.5rem;">
+      <input class="form-control" id="acct-search" placeholder="🔍 Search accounts..." style="width:220px;" oninput="filterTable('acct-search','accounts-body')">
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Code</th><th>Account Name</th><th>Type</th><th>Sub-Type</th><th style="text-align:right;">Balance</th></tr></thead>
+    <tbody id="accounts-body">
+    {% for a in accounts %}
+    <tr>
+      <td><code style="color:var(--accent);font-size:0.9rem;">{{ a.code }}</code></td>
+      <td style="font-weight:500;">{{ a.name }}</td>
+      <td>
+        {% if a.account_type == 'Asset' %}<span class="badge badge-blue">Asset</span>
+        {% elif a.account_type == 'Liability' %}<span class="badge badge-red">Liability</span>
+        {% elif a.account_type == 'Equity' %}<span class="badge badge-purple">Equity</span>
+        {% elif a.account_type == 'Revenue' %}<span class="badge badge-green">Revenue</span>
+        {% else %}<span class="badge badge-yellow">Expense</span>{% endif %}
+      </td>
+      <td style="color:var(--text-2);font-size:0.82rem;">{{ a.sub_type or '—' }}</td>
+      <td style="text-align:right;font-weight:600;color:{% if a.balance < 0 %}var(--danger){% else %}var(--success){% endif %};">
+        ${{ "%.2f"|format(a.balance) }}
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🗂️</div><p>No accounts yet.</p></div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- New Account Modal -->
+<div class="modal-overlay" id="newAccountModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">New Account</span>
+      <button class="modal-close" onclick="closeModal('newAccountModal')">×</button>
+    </div>
+    <form id="new-account-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Account Code</label>
+          <input class="form-control" name="code" placeholder="e.g. 1050" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Account Name</label>
+          <input class="form-control" name="name" placeholder="e.g. Savings Account" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Account Type</label>
+          <select class="form-control" name="account_type" required>
+            <option value="Asset">Asset</option>
+            <option value="Liability">Liability</option>
+            <option value="Equity">Equity</option>
+            <option value="Revenue">Revenue</option>
+            <option value="Expense">Expense</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Sub-Type (optional)</label>
+          <input class="form-control" name="sub_type" placeholder="e.g. Current Asset">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description (optional)</label>
+        <input class="form-control" name="description" placeholder="Brief description">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Create Account</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.getElementById('new-account-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const r = await fetch('/api/accounts', { method:'POST', body: fd });
+    const d = await r.json();
+    if (d.success) { toast(d.message,'success'); closeModal('newAccountModal'); setTimeout(()=>location.reload(), 800); }
+    else toast(d.error || 'Error','error');
+  });
+</script>
+{% endblock %}

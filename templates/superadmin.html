@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}SuperAdmin Creator Control Center{% endblock %}
+{% block page_title %}🛡️ App Creator Master Control & Platform Revenue Panel{% endblock %}
+
+{% block content %}
+<div class="executive-header" style="background:linear-gradient(135deg, #020617 0%, #0f172a 50%, #1e1b4b 100%);">
+  <div class="exec-title-group">
+    <h2>Nexus ERP Platform Creator Command Center</h2>
+    <p>Exclusive master admin portal for monitoring platform subscriptions, active companies, and total billing revenue.</p>
+  </div>
+  <div class="exec-badge" style="background:rgba(239, 68, 68, 0.2);border:1px solid #ef4444;color:#fca5a5;">
+    <span>🛡️ SuperAdmin Access Level</span>
+  </div>
+</div>
+
+<div class="alert alert-info" style="background:rgba(30, 58, 138, 0.4);border:1px solid #3b82f6;color:#93c5fd;padding:1rem;border-radius:10px;margin-top:1.5rem;margin-bottom:1.5rem;">
+  🔒 <strong>Tenant Privacy Guarantee Shield:</strong> Tenant accounting entries, journal lines, invoices, and bank statements are strictly confidential and shielded. Only company management metrics and SaaS billing records are visible here.
+</div>
+
+<!-- PLATFORM KPI CARDS -->
+<div class="kpi-grid">
+  <div class="kpi-card blue">
+    <div class="kpi-label">Total Registered Tenants</div>
+    <div class="kpi-value">{{ total_user_count }}</div>
+    <div class="kpi-sub">Active Companies & Organizations</div>
+  </div>
+  <div class="kpi-card green">
+    <div class="kpi-label">Total SaaS Billing Revenue</div>
+    <div class="kpi-value">${{ "{:,.2f}".format(total_revenue) }}</div>
+    <div class="kpi-sub">Collected via Stripe / Local Gateways</div>
+  </div>
+  <div class="kpi-card purple">
+    <div class="kpi-label">System Health Status</div>
+    <div class="kpi-value" style="color:#4ade80;">100% Online</div>
+    <div class="kpi-sub">MSSQL / SQLite Cluster Healthy</div>
+  </div>
+</div>
+
+<!-- TENANT USERS DIRECTORY -->
+<div class="card" style="margin-top:1.5rem;">
+  <div class="card-header">
+    <h3>🌐 Registered Platform Users & Companies Directory</h3>
+  </div>
+  <div class="card-body">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Username / Email</th>
+          <th>Company Name</th>
+          <th>Industry</th>
+          <th>Business Type</th>
+          <th>Plan Tier</th>
+          <th>Status</th>
+          <th>Registered Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in all_users %}
+        <tr>
+          <td><strong>{{ u.username }}</strong><br><small style="color:var(--text-3);">{{ u.email }}</small></td>
+          <td><strong>{{ u.company_name }}</strong></td>
+          <td>{{ u.industry or 'General Services' }}</td>
+          <td>{{ u.business_type or 'Private Limited' }}</td>
+          <td><span class="badge badge-primary">{{ u.plan|capitalize }}</span></td>
+          <td>
+            <span class="badge {% if u.subscription_status == 'active' %}status-approved{% else %}status-pending{% endif %}">
+              {{ u.subscription_status|capitalize }}
+            </span>
+          </td>
+          <td class="date-sm">{{ u.created_at.strftime('%Y-%m-%d %H:%M') if u.created_at else '' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ALL PAYMENT RECEIPTS -->
+<div class="card" style="margin-top:1.5rem;">
+  <div class="card-header">
+    <h3>📜 Global Platform Payment Receipts Audit</h3>
+  </div>
+  <div class="card-body">
+    {% if all_payments %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Transaction Ref</th>
+          <th>User ID</th>
+          <th>Plan Tier</th>
+          <th>Amount Paid</th>
+          <th>Gateway</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in all_payments %}
+        <tr>
+          <td><code>{{ p.transaction_ref }}</code></td>
+          <td>User #{{ p.user_id }}</td>
+          <td><strong>{{ p.plan_name|capitalize }}</strong></td>
+          <td>${{ "{:,.2f}".format(p.amount) }} {{ p.currency }}</td>
+          <td><span class="badge badge-info">{{ p.gateway }}</span></td>
+          <td class="date-sm">{{ p.created_at.strftime('%Y-%m-%d %H:%M') if p.created_at else '' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">💳</div>
+      <p>No billing transactions processed on the platform yet.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

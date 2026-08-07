@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}HR Team Seats Manager{% endblock %}
+{% block page_title %}👥 HR Custom Team Seats & Staff Permissions{% endblock %}
+
+{% block content %}
+<div class="executive-header" style="background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
+  <div class="exec-title-group">
+    <h2>HR Custom Team Expansion Suite</h2>
+    <p>Available on <strong>Partnership</strong> and <strong>Corporate</strong> plans. Invite unlimited accountants, auditors, and payroll specialists to your company.</p>
+  </div>
+  <div class="exec-badge">
+    <span>💼 {{ user.plan|capitalize }} HR Seats Active</span>
+  </div>
+</div>
+
+{% if request.query_params.get('success') %}
+<div class="alert alert-success" style="background:#d1fae5;color:#065f46;padding:1rem;border-radius:10px;margin-bottom:1.5rem;">
+  ✔ <strong>Team Member Invited!</strong> New accountant seat created and credentials dispatched.
+</div>
+{% endif %}
+
+<div class="grid-2" style="margin-top:1.5rem;">
+  <!-- INVITE MEMBER FORM -->
+  <div class="card">
+    <div class="card-header">
+      <h3>➕ Invite New Staff / Accountant</h3>
+    </div>
+    <div class="card-body">
+      <form action="/api/team/invite" method="POST">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input class="form-control" name="member_name" placeholder="e.g. Ali Hassan" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input class="form-control" type="email" name="email" placeholder="ali@company.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Role Designation</label>
+          <select class="form-control" name="role_title">
+            <option value="Senior Auditor">🔍 Senior Auditor</option>
+            <option value="Junior Accountant">📊 Junior Accountant</option>
+            <option value="Payroll Specialist">👥 Payroll Specialist</option>
+            <option value="Tax Consultant">📑 Tax Consultant</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Access Permissions</label>
+          <select class="form-control" name="permissions">
+            <option value="read_write">Read & Write Access (Journal Entries & Invoices)</option>
+            <option value="read_only">Read Only (Audit & Reports Viewer)</option>
+            <option value="full_access">Full Access (Executive Comm & Ledger)</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">Dispatch Invitation Seat →</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ACTIVE TEAM LIST -->
+  <div class="card">
+    <div class="card-header">
+      <h3>👥 Active Company Accountants & Staff</h3>
+    </div>
+    <div class="card-body">
+      {% if members %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Role Title</th>
+            <th>Permissions</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in members %}
+          <tr>
+            <td><strong>{{ m.member_name }}</strong><br><small style="color:var(--text-3);">{{ m.email }}</small></td>
+            <td><span class="badge badge-info">{{ m.role_title }}</span></td>
+            <td><code>{{ m.permissions }}</code></td>
+            <td><span class="badge status-approved">Active Seat</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">👥</div>
+        <p>No extra team members added yet. Fill out the form on the left to invite accountants.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

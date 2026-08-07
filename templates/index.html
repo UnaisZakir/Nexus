@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+{% block title %}World #1 AI Financial Accounting Dashboard | Nexus ERP{% endblock %}
+{% block page_title %}📊 Enterprise Financial Dashboard & Ledger Analytics{% endblock %}
+{% block meta_desc %}Nexus ERP Financial Dashboard — Real-time enterprise accounting overview, double-entry ledger KPIs, revenue tracking, profit & loss analytics, and automated bank reconciliation.{% endblock %}
+
+
+{% block topbar_actions %}
+  <a href="/journal?new=true" class="btn btn-primary btn-sm">+ Journal Entry</a>
+{% endblock %}
+
+{% block content %}
+<!-- KPI Cards -->
+<div class="kpi-grid">
+  <div class="kpi-card blue">
+    <div class="kpi-label">Total Revenue</div>
+    <div class="kpi-value" id="kpi-revenue">${{ "{:,.2f}".format(total_revenue) }}</div>
+    <div class="kpi-sub">Cumulative Sales & Service Income</div>
+  </div>
+  <div class="kpi-card {% if net_profit >= 0 %}green{% else %}red{% endif %}">
+    <div class="kpi-label">Net Profit / (Loss)</div>
+    <div class="kpi-value" id="kpi-profit">${{ "{:,.2f}".format(net_profit) }}</div>
+    <div class="kpi-sub">Revenue minus Total Expenses</div>
+  </div>
+  <div class="kpi-card purple">
+    <div class="kpi-label">Total Assets</div>
+    <div class="kpi-value">${{ "{:,.2f}".format(total_assets) }}</div>
+    <div class="kpi-sub">Current + Fixed Assets</div>
+  </div>
+  <div class="kpi-card red">
+    <div class="kpi-label">Total Expenses</div>
+    <div class="kpi-value">${{ "{:,.2f}".format(total_expenses) }}</div>
+    <div class="kpi-sub">All Operating & Finance Costs</div>
+  </div>
+  <div class="kpi-card gold">
+    <div class="kpi-label">Pending Invoices</div>
+    <div class="kpi-value">{{ pending_invoices }}</div>
+    <div class="kpi-sub">Outstanding or Overdue</div>
+  </div>
+  <div class="kpi-card {% if unmatched_bank > 0 %}red{% else %}green{% endif %}">
+    <div class="kpi-label">Unmatched Bank Txns</div>
+    <div class="kpi-value">{{ unmatched_bank }}</div>
+    <div class="kpi-sub">Requires Reconciliation</div>
+  </div>
+</div>
+
+<!-- ─── CASH FLOW ANALYTICS STATEMENT ─── -->
+<div class="card" style="margin-bottom: 1.75rem; background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%); border: 1px solid var(--accent);">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+    <div style="display:flex; align-items:center; gap:0.5rem;">
+      <span style="font-size:1.4rem;">🌊</span>
+      <h3 style="margin:0; font-size:1.1rem; font-weight:700; color:var(--text-1);">Statement of Cash Flows (IAS 7 Compliant)</h3>
+    </div>
+    <span class="badge badge-primary">Operating · Investing · Financing</span>
+  </div>
+
+  <div class="grid-4" style="gap: 1rem;">
+    <div style="background:var(--surface); padding:1rem; border-radius:10px; border:1px solid var(--border);">
+      <div style="font-size:0.78rem; font-weight:600; color:var(--text-3);">Operating Cash Flow</div>
+      <div class="kpi-value" style="font-size:1.3rem; color:#4ade80; margin-top:0.25rem;">${{ "{:,.2f}".format(operating_cf) }}</div>
+      <div style="font-size:0.72rem; color:var(--text-2); margin-top:0.25rem;">Customer Receipts & Operating Costs</div>
+    </div>
+    <div style="background:var(--surface); padding:1rem; border-radius:10px; border:1px solid var(--border);">
+      <div style="font-size:0.78rem; font-weight:600; color:var(--text-3);">Investing Cash Flow</div>
+      <div class="kpi-value" style="font-size:1.3rem; color:#f87171; margin-top:0.25rem;">${{ "{:,.2f}".format(investing_cf) }}</div>
+      <div style="font-size:0.72rem; color:var(--text-2); margin-top:0.25rem;">Equipment & Capital Asset Outflow</div>
+    </div>
+    <div style="background:var(--surface); padding:1rem; border-radius:10px; border:1px solid var(--border);">
+      <div style="font-size:0.78rem; font-weight:600; color:var(--text-3);">Financing Cash Flow</div>
+      <div class="kpi-value" style="font-size:1.3rem; color:#60a5fa; margin-top:0.25rem;">${{ "{:,.2f}".format(financing_cf) }}</div>
+      <div style="font-size:0.72rem; color:var(--text-2); margin-top:0.25rem;">Equity Capital & Debt Loans</div>
+    </div>
+    <div style="background:var(--surface-2); padding:1rem; border-radius:10px; border:1px solid var(--accent);">
+      <div style="font-size:0.78rem; font-weight:600; color:var(--text-1);">Net Cash Position</div>
+      <div class="kpi-value" style="font-size:1.3rem; color:var(--accent); margin-top:0.25rem;">${{ "{:,.2f}".format(net_cash_flow) }}</div>
+      <div style="font-size:0.72rem; color:var(--text-2); margin-top:0.25rem;">Net Increase in Liquidity Reserves</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Chart Card -->
+<div class="card" style="margin-bottom: 1.75rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <span class="section-title" style="margin: 0;">📊 Financial Performance Trend</span>
+    <span style="font-size: 0.8rem; color: var(--text-2);">Rolling 6-Month Operations</span>
+  </div>
+  <div style="height: 280px; position: relative;">
+    <canvas id="financialChart"></canvas>
+  </div>
+</div>
+
+<!-- Main grid -->
+<div class="grid-2">
+  <!-- Recent Journal Entries -->
+  <div class="table-wrapper">
+    <div class="table-header">
+      <span class="table-title">📖 Recent Journal Entries</span>
+      <a href="/journal" class="btn btn-secondary btn-sm">View All</a>
+    </div>
+    <table>
+      <thead><tr><th>Date</th><th>Description</th><th>Ref</th><th>Amount</th></tr></thead>
+      <tbody id="recent-entries-body">
+        {% for entry in recent_entries %}
+        <tr>
+          <td>{{ entry.date }}</td>
+          <td>{{ entry.description }}</td>
+          <td style="color: var(--text-3);">{{ entry.reference or '—' }}</td>
+          <td>${{ "%.2f"|format(entry.total or 0) }}</td>
+        </tr>
+        {% else %}
+        <tr class="empty-row"><td colspan="4"><div class="empty-state"><div class="empty-icon">📋</div><p>No journal entries yet.</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Quick Actions -->
+  <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+    <!-- Quick Stats Card -->
+    <div class="card">
+      <div class="section-title" style="margin-bottom: 1rem;">📊 Equity Position</div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+        <span style="font-size: 0.82rem; color: var(--text-2);">Total Assets</span>
+        <span style="font-weight: 600;">${{ "%.2f"|format(total_assets) }}</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+        <span style="font-size: 0.82rem; color: var(--text-2);">Total Liabilities</span>
+        <span style="font-weight: 600; color: var(--danger);">${{ "%.2f"|format(total_liabilities) }}</span>
+      </div>
+      <hr class="divider">
+      <div style="display: flex; justify-content: space-between;">
+        <span style="font-size: 0.9rem; font-weight: 700;">Net Equity</span>
+        <span style="font-size: 1.1rem; font-weight: 700; color: var(--success);">${{ "%.2f"|format(equity) }}</span>
+      </div>
+    </div>
+
+    <!-- Quick Journal Entry -->
+    <div class="card">
+      <div class="section-title" style="margin-bottom: 1rem;">⚡ Quick Journal Entry</div>
+      <p style="font-size: 0.78rem; color: var(--text-2); margin-bottom: 1rem;">For a full multi-line entry, use the Journal Entries page.</p>
+      <a href="/journal" class="btn btn-primary" style="width: 100%; justify-content: center;">Open Journal →</a>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="card">
+      <div class="section-title" style="margin-bottom: 1rem;">🚀 Quick Actions</div>
+      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <a href="/invoices" class="btn btn-secondary">🧾 Create Invoice</a>
+        <a href="/reconciliation" class="btn btn-secondary">🏦 Reconcile Bank</a>
+        <a href="/reports" class="btn btn-secondary">📈 View Reports</a>
+        <a href="/ai" class="btn btn-success">🤖 Ask Nexus AI</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const ctx = document.getElementById('financialChart').getContext('2d');
+    
+    const rev = parseFloat("{{ total_revenue }}") || 0;
+    const exp = parseFloat("{{ total_expenses }}") || 0;
+    const net = parseFloat("{{ net_profit }}") || 0;
+
+    // Simulate 6 months trend ending with current dynamic totals
+    const revenueData = [rev * 0.6, rev * 0.75, rev * 0.8, rev * 0.9, rev * 0.85, rev];
+    const expenseData = [exp * 0.7, exp * 0.8, exp * 0.75, exp * 0.85, exp * 0.9, exp];
+    const profitData = revenueData.map((r, i) => r - expenseData[i]);
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [
+          {
+            label: 'Revenue',
+            data: revenueData,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.05)',
+            fill: true,
+            tension: 0.35,
+            borderWidth: 3
+          },
+          {
+            label: 'Expenses',
+            data: expenseData,
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.02)',
+            fill: true,
+            tension: 0.35,
+            borderWidth: 2
+          },
+          {
+            label: 'Net Profit',
+            data: profitData,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.05)',
+            fill: true,
+            tension: 0.35,
+            borderWidth: 3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } }
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: { color: '#94a3b8', font: { family: 'Inter', size: 10 } }
+          },
+          y: {
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: { color: '#94a3b8', font: { family: 'Inter', size: 10 } }
+          }
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}

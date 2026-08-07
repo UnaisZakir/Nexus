@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}Invoicing{% endblock %}
+{% block page_title %}Invoicing{% endblock %}
+
+{% block topbar_actions %}
+  <button class="btn btn-primary btn-sm" onclick="openModal('newInvoiceModal')">+ New Invoice</button>
+{% endblock %}
+
+{% block content %}
+<div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);">
+  <div class="kpi-card red">
+    <div class="kpi-label">Outstanding</div>
+    <div class="kpi-value">${{ "%.2f"|format(total_outstanding) }}</div>
+    <div class="kpi-sub">Unpaid invoices</div>
+  </div>
+  <div class="kpi-card blue">
+    <div class="kpi-label">Total Invoices</div>
+    <div class="kpi-value">{{ invoices|length }}</div>
+    <div class="kpi-sub">All time</div>
+  </div>
+  <div class="kpi-card green">
+    <div class="kpi-label">Paid</div>
+    <div class="kpi-value">{{ invoices|selectattr('status','equalto','paid')|list|length }}</div>
+    <div class="kpi-sub">Fully settled</div>
+  </div>
+</div>
+
+<div class="table-wrapper">
+  <div class="table-header">
+    <span class="table-title">🧾 All Invoices</span>
+    <input class="form-control" id="inv-search" placeholder="🔍 Search..." style="width:220px;" oninput="filterTable('inv-search','inv-body')">
+  </div>
+  <table>
+    <thead><tr><th>Invoice #</th><th>Customer</th><th>Date</th><th>Due Date</th><th>Total</th><th>Paid</th><th>Status</th><th style="text-align:right;">Actions</th></tr></thead>
+    <tbody id="inv-body">
+    {% for inv in invoices %}
+    <tr>
+      <td style="font-weight:600;color:var(--accent);">{{ inv.invoice_no }}</td>
+      <td>{{ inv.contact.name if inv.contact else '—' }}</td>
+      <td>{{ inv.date }}</td>
+      <td>{{ inv.due_date or '—' }}</td>
+      <td style="font-weight:600;">${{ "%.2f"|format(inv.total) }}</td>
+      <td>${{ "%.2f"|format(inv.amount_paid) }}</td>
+      <td>
+        {% if inv.status == 'paid' %}<span class="badge badge-green">✓ Paid</span>
+        {% elif inv.status == 'overdue' %}<span class="badge badge-red">Overdue</span>
+        {% elif inv.status == 'sent' %}<span class="badge badge-yellow">Sent</span>
+        {% else %}<span class="badge badge-gray">Draft</span>{% endif %}
+      </td>
+      <td>
+        <div style="display:flex;justify-content:flex-end;gap:0.4rem;">
+          {% if inv.status != 'paid' %}
+          <button class="btn btn-success btn-sm" onclick="openPaymentModal({{ inv.id }}, '{{ inv.invoice_no }}', {{ inv.total - inv.amount_paid }})" style="padding:0.25rem 0.6rem;font-size:0.75rem;border-radius:4px;">💳 Pay</button>
+          {% endif %}
+          <a href="/api/invoices/{{ inv.id }}/pdf" class="btn btn-secondary btn-sm" target="_blank" style="padding:0.25rem 0.6rem;font-size:0.75rem;border-radius:4px;">📄 PDF</a>
+        </div>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">🧾</div><p>No invoices yet.</p></div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- New Invoice Modal -->
+<div class="modal-overlay" id="newInvoiceModal">
+  <div class="modal" style="max-width:720px;">
+    <div class="modal-header">
+      <span class="modal-title">🧾 Create New Invoice</span>
+      <button class="modal-close" onclick="closeModal('newInvoiceModal')">×</button>
+    </div>
+    <form id="invoice-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Customer Name</label>
+          <input class="form-control" name="customer_name" placeholder="Customer or Company Name" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Invoice Date</label>
+          <input class="form-control" type="date" name="date" required id="inv-date">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Due Date</label>
+        <input class="form-control" type="date" name="due_date">
+      </div>
+
+      <label class="form-label" style="margin:1rem 0 0.5rem;">Line Items</label>
+      <table class="journal-lines-table" id="inv-lines-table">
+        <thead><tr><th style="width:40%;">Description</th><th>Qty</th><th>Unit Price</th><th>Tax %</th><th>Amount</th><th></th></tr></thead>
+        <tbody id="inv-lines-body">
+          <tr class="inv-line">
+            <td><input class="form-control" name="item_desc[]" placeholder="Item/Service" required></td>
+            <td><input class="form-control" type="number" step="1" min="1" name="item_qty[]" value="1" oninput="calcInvLine(this)" style="width:60px;"></td>
+            <td><input class="form-control" type="number" step="0.01" min="0" name="item_price[]" placeholder="0.00" oninput="calcInvLine(this)"></td>
+            <td><input class="form-control" type="number" step="0.01" min="0" name="item_tax[]" placeholder="0" style="width:60px;"></td>
+            <td class="line-amount" style="font-weight:600;">$0.00</td>
+            <td><button type="button" class="btn btn-danger btn-sm" onclick="removeInvLine(this)">✕</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="addInvLine()" style="margin:0.75rem 0;">+ Add Item</button>
+      
+      <div style="background:var(--surface);border-radius:var(--radius-sm);padding:1rem;margin-bottom:1rem;text-align:right;">
+        <div style="font-size:0.82rem;color:var(--text-2);margin-bottom:0.25rem;">Subtotal: <strong id="inv-subtotal">$0.00</strong></div>
+        <div style="font-size:1.1rem;font-weight:700;">Total: <span id="inv-total" style="color:var(--success);">$0.00</span></div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;" id="inv-submit-btn">Create & Send Invoice</button>
+    </form>
+  </div>
+</div>
+
+<!-- Record Payment Modal -->
+<div class="modal-overlay" id="paymentModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">💳 Record Invoice Payment</span>
+      <button class="modal-close" onclick="closeModal('paymentModal')">×</button>
+    </div>
+    <form id="payment-form">
+      <input type="hidden" name="invoice_id" id="pay-invoice-id">
+      <div class="form-group">
+        <label class="form-label">Invoice Number</label>
+        <input class="form-control" id="pay-invoice-no" readonly style="background:var(--surface-2);font-weight:600;">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Payment Date</label>
+          <input class="form-control" type="date" name="date" required id="pay-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Amount Received ($)</label>
+          <input class="form-control" type="number" step="0.01" min="0.01" name="amount" required id="pay-amount" placeholder="0.00">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem;" id="pay-submit-btn">Record Payment</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('inv-date').value = new Date().toISOString().split('T')[0];
+
+function calcInvLine(input) {
+  const row = input.closest('tr');
+  const qty   = parseFloat(row.querySelector('[name="item_qty[]"]').value  || 0);
+  const price = parseFloat(row.querySelector('[name="item_price[]"]').value || 0);
+  row.querySelector('.line-amount').textContent = '$' + (qty * price).toFixed(2);
+  updateInvTotal();
+}
+
+function updateInvTotal() {
+  let sub = 0;
+  document.querySelectorAll('.inv-line').forEach(row => {
+    const qty   = parseFloat(row.querySelector('[name="item_qty[]"]').value  || 0);
+    const price = parseFloat(row.querySelector('[name="item_price[]"]').value || 0);
+    sub += qty * price;
+  });
+  document.getElementById('inv-subtotal').textContent = '$' + sub.toFixed(2);
+  document.getElementById('inv-total').textContent    = '$' + sub.toFixed(2);
+}
+
+function addInvLine() {
+  const tbody = document.getElementById('inv-lines-body');
+  const tr = document.createElement('tr'); tr.className = 'inv-line';
+  tr.innerHTML = `
+    <td><input class="form-control" name="item_desc[]" placeholder="Item/Service" required></td>
+    <td><input class="form-control" type="number" step="1" min="1" name="item_qty[]" value="1" oninput="calcInvLine(this)" style="width:60px;"></td>
+    <td><input class="form-control" type="number" step="0.01" min="0" name="item_price[]" placeholder="0.00" oninput="calcInvLine(this)"></td>
+    <td><input class="form-control" type="number" step="0.01" min="0" name="item_tax[]" placeholder="0" style="width:60px;"></td>
+    <td class="line-amount" style="font-weight:600;">$0.00</td>
+    <td><button type="button" class="btn btn-danger btn-sm" onclick="removeInvLine(this)">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+
+function removeInvLine(btn) {
+  if (document.querySelectorAll('.inv-line').length <= 1) return;
+  btn.closest('tr').remove(); updateInvTotal();
+}
+
+document.getElementById('invoice-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('inv-submit-btn');
+  btn.disabled = true; btn.textContent = 'Creating...';
+  const fd = new FormData(e.target);
+  const r  = await fetch('/api/invoices', { method:'POST', body: fd });
+  const d  = await r.json();
+  if (d.success) { toast(d.message, 'success'); closeModal('newInvoiceModal'); setTimeout(() => location.reload(), 800); }
+  else { toast(d.error || 'Error', 'error'); btn.disabled = false; btn.textContent = 'Create & Send Invoice'; }
+});
+
+function openPaymentModal(id, invoiceNo, balance) {
+  document.getElementById('pay-invoice-id').value = id;
+  document.getElementById('pay-invoice-no').value = invoiceNo;
+  document.getElementById('pay-amount').value = balance.toFixed(2);
+  document.getElementById('pay-amount').max = balance.toFixed(2);
+  document.getElementById('pay-date').value = new Date().toISOString().split('T')[0];
+  openModal('paymentModal');
+}
+
+document.getElementById('payment-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('pay-submit-btn');
+  btn.disabled = true; btn.textContent = 'Recording...';
+  const id = document.getElementById('pay-invoice-id').value;
+  const fd = new FormData(e.target);
+  const r  = await fetch(`/api/invoices/${id}/pay`, { method:'POST', body: fd });
+  const d  = await r.json();
+  if (d.success) {
+    toast(d.message, 'success');
+    closeModal('paymentModal');
+    setTimeout(() => location.reload(), 800);
+  } else {
+    toast(d.error || 'Error', 'error');
+    btn.disabled = false; btn.textContent = 'Record Payment';
+  }
+});
+</script>
+{% endblock %}

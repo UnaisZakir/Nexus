@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Payroll{% endblock %}
+{% block page_title %}Payroll Management{% endblock %}
+
+{% block topbar_actions %}
+  <button class="btn btn-secondary btn-sm" onclick="openModal('addEmpModal')">+ Add Employee</button>
+  <button class="btn btn-primary btn-sm" onclick="openModal('runPayrollModal')">▶ Run Payroll</button>
+{% endblock %}
+
+{% block content %}
+<div class="grid-2">
+  <!-- Employee List -->
+  <div class="table-wrapper">
+    <div class="table-header"><span class="table-title">👥 Employees</span></div>
+    <table>
+      <thead><tr><th>Name</th><th>Designation</th><th>Gross Salary</th><th>Tax Rate</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for e in employees %}
+      <tr>
+        <td style="font-weight:600;">{{ e.name }}</td>
+        <td style="color:var(--text-2);">{{ e.designation or '—' }}</td>
+        <td>${{ "%.2f"|format(e.salary) }}</td>
+        <td>{{ e.tax_rate }}%</td>
+        <td><span class="badge badge-green">Active</span></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">👥</div><p>No employees added yet.</p></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Payroll History -->
+  <div class="table-wrapper">
+    <div class="table-header"><span class="table-title">💰 Payroll History</span></div>
+    <table>
+      <thead><tr><th>Period</th><th>Employee</th><th>Gross</th><th>Tax</th><th>Net Pay</th></tr></thead>
+      <tbody>
+      {% for p in payrolls %}
+      <tr>
+        <td><span class="badge badge-blue">{{ p.period }}</span></td>
+        <td>{{ p.employee.name }}</td>
+        <td>${{ "%.2f"|format(p.gross_salary) }}</td>
+        <td style="color:var(--danger);">-${{ "%.2f"|format(p.tax_withheld) }}</td>
+        <td style="font-weight:700;color:var(--success);">${{ "%.2f"|format(p.net_salary) }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">💰</div><p>No payroll runs yet.</p></div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Employee Modal -->
+<div class="modal-overlay" id="addEmpModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Add Employee</span>
+      <button class="modal-close" onclick="closeModal('addEmpModal')">×</button>
+    </div>
+    <form id="emp-form">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Full Name</label><input class="form-control" name="name" required placeholder="Employee Name"></div>
+        <div class="form-group"><label class="form-label">Designation</label><input class="form-control" name="designation" placeholder="Job Title"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Gross Salary</label><input class="form-control" type="number" step="0.01" name="salary" required placeholder="0.00"></div>
+        <div class="form-group"><label class="form-label">Tax Rate (%)</label><input class="form-control" type="number" step="0.01" name="tax_rate" value="0" placeholder="e.g. 10"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Date Joined</label><input class="form-control" type="date" name="joined_date"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Add Employee</button>
+    </form>
+  </div>
+</div>
+
+<!-- Run Payroll Modal -->
+<div class="modal-overlay" id="runPayrollModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">▶ Run Payroll</span>
+      <button class="modal-close" onclick="closeModal('runPayrollModal')">×</button>
+    </div>
+    <p style="font-size:0.875rem;color:var(--text-2);margin-bottom:1rem;">This will process payroll for all active employees for the selected period and automatically post the journal entries.</p>
+    <form id="payroll-form">
+      <div class="form-group">
+        <label class="form-label">Payroll Period (YYYY-MM)</label>
+        <input class="form-control" name="period" type="month" required>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">Process Payroll</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('emp-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const r = await fetch('/api/payroll/employee', { method:'POST', body: new FormData(e.target) });
+  const d = await r.json();
+  if (d.success) { toast(d.message, 'success'); closeModal('addEmpModal'); setTimeout(() => location.reload(), 800); }
+  else toast(d.error || 'Error', 'error');
+});
+
+document.getElementById('payroll-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type=submit]');
+  btn.disabled = true; btn.textContent = 'Processing...';
+  const r = await fetch('/api/payroll/run', { method:'POST', body: new FormData(e.target) });
+  const d = await r.json();
+  if (d.success) { toast(d.message, 'success'); closeModal('runPayrollModal'); setTimeout(() => location.reload(), 1000); }
+  else { toast(d.error || 'Error', 'error'); btn.disabled = false; btn.textContent = 'Process Payroll'; }
+});
+</script>
+{% endblock %}

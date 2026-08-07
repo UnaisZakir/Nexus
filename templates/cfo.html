@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+
+{% block title %}CFO Control Center{% endblock %}
+{% block page_title %}💼 CFO Financial Admin Panel{% endblock %}
+
+{% block topbar_actions %}
+<a href="/communication" class="btn btn-primary btn-sm">💬 Open Comm Hub</a>
+{% endblock %}
+
+{% block content %}
+<div class="executive-header cfo-header-bg">
+  <div class="exec-title-group">
+    <h2>Financial Operations, Risk Oversight & Liquidity Controls</h2>
+    <p>Welcome back, <strong>{{ user.username }}</strong>. Real-time balance sheet health, financial ratio analysis, and capital allocation.</p>
+  </div>
+  <div class="exec-badge cfo-badge">
+    <span>💼 Chief Financial Officer</span>
+  </div>
+</div>
+
+<!-- CFO FINANCIAL KPIS & RATIOS -->
+<div class="kpi-grid">
+  <div class="kpi-card green">
+    <div class="kpi-icon">💼</div>
+    <div class="kpi-content">
+      <div class="kpi-label">Working Capital</div>
+      <div class="kpi-value">${{ "{:,.2f}".format(working_capital) }}</div>
+      <div class="kpi-sub positive">Current Assets − Current Liab.</div>
+    </div>
+  </div>
+
+  <div class="kpi-card blue">
+    <div class="kpi-icon">📈</div>
+    <div class="kpi-content">
+      <div class="kpi-label">Current Ratio</div>
+      <div class="kpi-value">{{ current_ratio }}</div>
+      <div class="kpi-sub {% if current_ratio >= 1.5 %}positive{% else %}warning{% endif %}">
+        {% if current_ratio >= 1.5 %}Healthy Liquidity (≥1.5x){% else %}Low Liquidity Alert{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="kpi-card gold">
+    <div class="kpi-icon">⚡</div>
+    <div class="kpi-content">
+      <div class="kpi-label">Quick Ratio</div>
+      <div class="kpi-value">{{ quick_ratio }}</div>
+      <div class="kpi-sub">Acid-Test Liquidity</div>
+    </div>
+  </div>
+
+  <div class="kpi-card purple">
+    <div class="kpi-icon">⚖️</div>
+    <div class="kpi-content">
+      <div class="kpi-label">Debt to Equity</div>
+      <div class="kpi-value">{{ debt_to_equity }}</div>
+      <div class="kpi-sub">Financial Leverage Ratio</div>
+    </div>
+  </div>
+
+  <div class="kpi-card red">
+    <div class="kpi-icon">🔍</div>
+    <div class="kpi-content">
+      <div class="kpi-label">Unmatched Bank Items</div>
+      <div class="kpi-value">{{ unreconciled_count }}</div>
+      <div class="kpi-sub {% if unreconciled_count == 0 %}positive{% else %}warning{% endif %}">
+        {% if unreconciled_count == 0 %}Reconciliation Clear{% else %}Audit Attention Needed{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="grid-2-1" style="margin-top:1.5rem;">
+  <!-- SUBMIT PROPOSAL TO CEO -->
+  <div class="card">
+    <div class="card-header">
+      <h3>📝 Submit Financial Proposal / Capital Request to CEO</h3>
+    </div>
+    <div class="card-body">
+      <form action="/cfo/proposals" method="POST">
+        <div class="form-group">
+          <label class="form-label">Proposal Title / Subject</label>
+          <input class="form-control" name="subject" placeholder="e.g., Capital Investment for Cloud Expansion" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Requested Amount ($)</label>
+            <input type="number" step="0.01" class="form-control" name="amount" placeholder="45000.00" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Urgency Level</label>
+            <select class="form-control" name="urgency">
+              <option value="Normal">Normal</option>
+              <option value="Important" selected>Important</option>
+              <option value="Urgent">Urgent</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Detailed Financial Justification</label>
+          <textarea class="form-control" name="message" rows="4" placeholder="Explain expected ROI, liquidity impact, and strategic alignment..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">Submit to CEO for Approval →</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MY SUBMITTED PROPOSALS STATUS -->
+  <div class="card">
+    <div class="card-header">
+      <h3>📋 Proposal Sign-off Status Tracker</h3>
+    </div>
+    <div class="card-body">
+      {% if my_proposals %}
+      <div class="proposal-list">
+        {% for prop in my_proposals %}
+        <div class="proposal-card">
+          <div class="proposal-header">
+            <span class="proposal-title" style="margin:0;">{{ prop.subject }}</span>
+            <span class="badge status-{{ prop.status|lower }}">{{ prop.status }}</span>
+          </div>
+          <div class="proposal-body" style="font-size:0.85rem;margin-top:0.5rem;">{{ prop.message }}</div>
+          {% if prop.amount > 0 %}
+          <div class="proposal-amount">Budget: <strong>${{ "{:,.2f}".format(prop.amount) }}</strong></div>
+          {% endif %}
+          <div class="date-sm" style="margin-top:0.4rem;">Submitted: {{ prop.created_at.strftime('%Y-%m-%d %H:%M') if prop.created_at else '' }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📂</div>
+        <p>No financial proposals submitted yet.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- AUDIT & COMPLIANCE TRAIL -->
+<div class="card" style="margin-top:1.5rem;">
+  <div class="card-header">
+    <h3>🛡️ CFO Audit & Compliance Trail</h3>
+    <span class="badge badge-info">Real-time Financial Log</span>
+  </div>
+  <div class="card-body">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Action</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in recent_logs %}
+        <tr>
+          <td class="date-sm">{{ log.created_at.strftime('%Y-%m-%d %H:%M') if log.created_at else '' }}</td>
+          <td><span class="badge badge-secondary">{{ log.action }}</span></td>
+          <td>{{ log.details }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

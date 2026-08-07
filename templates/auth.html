@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus ERP — #1 AI Accounting Software & Executive Financial ERP</title>
+  <meta name="description" content="Sign in or register for Nexus ERP. The #1 AI-powered accounting software with CEO & CFO admin panels, tri-party thought exchange, double-entry ledger, bank reconciliation, and automated reporting.">
+  <meta name="keywords" content="Nexus ERP login, accounting software sign up, AI accountant login, best accounting ERP, CFO admin panel, CEO dashboard, corporate accounting software">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="http://localhost:8000/auth">
+
+  <!-- OpenGraph -->
+  <meta property="og:title" content="Nexus ERP — Sign In to #1 AI Accounting Platform">
+  <meta property="og:description" content="Access your Nexus ERP executive command center. Built for CEO, CFO, and Senior Accountants.">
+  <meta property="og:type" content="website">
+
+  <!-- FAQPage JSON-LD Schema for Google Rich Snippets & AI Overviews -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is Nexus ERP?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nexus ERP is the world's leading AI-powered accounting software and enterprise financial management platform. It features specialized CEO and CFO admin panels, tri-party executive communication, double-entry ledger, bank reconciliation, automated invoicing, and a 24/7 AI financial advisor."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does Nexus ERP support CEO and CFO admin panels?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes! Nexus ERP provides dedicated CEO Admin Panels for strategic governance and approval sign-offs, and CFO Admin Panels for liquidity ratio analysis, working capital tracking, and budget proposals."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does the executive communication system work in Nexus ERP?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Nexus ERP features a tri-party thought exchange board connecting the CEO, CFO, and Accountant in real-time. Team members can send strategic directives, capital proposals, audit inquiries, and financial notes with urgency tags and approval actions."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body style="overflow:auto;">
+<div class="auth-wrapper">
+  <div class="auth-card">
+
+    <div class="auth-logo">
+      <div style="display:flex;justify-content:center;">
+        <div class="logo-icon" style="width:50px;height:50px;font-size:1.5rem;border-radius:14px;">N</div>
+      </div>
+      <div class="brand" style="font-size:1.8rem;font-weight:800;background:linear-gradient(to right,#60a5fa,#a78bfa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;display:block;text-align:center;margin-top:0.5rem;">Nexus ERP</div>
+      <div class="tagline" style="text-align:center;font-size:0.82rem;color:var(--text-3);margin-top:0.25rem;">The AI-Powered Accounting Platform</div>
+    </div>
+
+    {% if error %}
+    <div class="error-msg">⚠ {{ error }}</div>
+    {% endif %}
+
+    <!-- Tabs -->
+    <div class="auth-tabs" id="auth-tabs">
+      <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
+      <button class="auth-tab" onclick="switchTab('register')">Create Account</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <form id="login-form" action="/auth/login" method="POST">
+      <!-- 1-Click Demo Executive Accounts -->
+      <div style="margin-bottom:1.25rem;background:var(--surface-2);padding:0.75rem;border-radius:10px;border:1px dashed var(--border-2);">
+        <div style="font-size:0.75rem;font-weight:700;color:var(--text-2);margin-bottom:0.5rem;text-align:center;">⚡ 1-Click Executive Demo Logins</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0.3rem;">
+          <button type="button" onclick="quickLogin('ceo','password123')" class="btn btn-secondary btn-sm" style="font-size:0.72rem;padding:0.4rem 0.2rem;justify-content:center;">👑 CEO</button>
+          <button type="button" onclick="quickLogin('cfo','password123')" class="btn btn-secondary btn-sm" style="font-size:0.72rem;padding:0.4rem 0.2rem;justify-content:center;">💼 CFO</button>
+          <button type="button" onclick="quickLogin('accountant','password123')" class="btn btn-secondary btn-sm" style="font-size:0.72rem;padding:0.4rem 0.2rem;justify-content:center;">📊 Accountant</button>
+          <button type="button" onclick="quickLogin('admin','admin123')" class="btn btn-warning btn-sm" style="font-size:0.72rem;padding:0.4rem 0.2rem;justify-content:center;">🛡️ Creator</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input class="form-control" name="username" id="login-username" placeholder="Enter username" required autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-control" type="password" name="password" id="login-password" placeholder="Enter password" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:0.5rem;">Sign In →</button>
+    </form>
+
+    <!-- MULTI-STEP BUSINESS ONBOARDING REGISTER FORM -->
+    <form id="register-form" action="/auth/register" method="POST" style="display:none;">
+      <!-- Step Indicator Bar -->
+      <div class="step-indicator-bar" style="display:flex;justify-content:space-between;margin-bottom:1rem;font-size:0.75rem;font-weight:700;color:var(--text-3);">
+        <span id="step-tab-1" class="step-badge active-step">1. Credentials</span>
+        <span id="step-tab-2" class="step-badge">2. Company Info</span>
+        <span id="step-tab-3" class="step-badge">3. Localization & Plan</span>
+      </div>
+
+      <!-- STEP 1: Account Credentials -->
+      <div id="register-step-1">
+        <div class="form-group">
+          <label class="form-label">Username</label>
+          <input class="form-control" name="username" placeholder="Choose username" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Work Email</label>
+          <input class="form-control" type="email" name="email" placeholder="ceo@company.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input class="form-control" type="password" name="password" placeholder="Create a strong password" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Your Executive Role</label>
+          <select class="form-control" name="role">
+            <option value="CEO" selected>👑 Chief Executive Officer (CEO)</option>
+            <option value="CFO">💼 Chief Financial Officer (CFO)</option>
+            <option value="Accountant">📊 Senior Accountant / Auditor</option>
+          </select>
+        </div>
+        <button type="button" onclick="goToStep(2)" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem;">Next: Business Profile →</button>
+      </div>
+
+      <!-- STEP 2: Business & Enterprise Info -->
+      <div id="register-step-2" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">Company / Registered Business Name</label>
+          <input class="form-control" name="company" placeholder="e.g. Nexus Enterprise Ltd" required>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Industry Sector</label>
+            <select class="form-control" name="industry">
+              <option value="IT / Tech Services" selected>💻 IT & Tech Services</option>
+              <option value="Trading & Retail">🛍️ Trading & Retail</option>
+              <option value="Manufacturing">🏭 Manufacturing</option>
+              <option value="Textile & Apparel">🧵 Textile & Apparel</option>
+              <option value="General Services">💼 General Services</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Business Structure</label>
+            <select class="form-control" name="business_type">
+              <option value="Private Limited">🏢 Private Limited (Pvt Ltd)</option>
+              <option value="Partnership">👥 Partnership Firm</option>
+              <option value="Sole Proprietor">🏪 Sole Proprietor / Dukan</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">NTN / Tax Registration ID (Optional)</label>
+            <input class="form-control" name="tax_id" placeholder="e.g. 1234567-8">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Estimated Annual Revenue</label>
+            <select class="form-control" name="annual_revenue">
+              <option value="Under Rs 1M">Under Rs 1M ($3.5k)</option>
+              <option value="Rs 1M - 10M" selected>Rs 1M - 10M ($35k)</option>
+              <option value="Rs 10M - 50M">Rs 10M - 50M ($180k)</option>
+              <option value="Rs 50M+">Rs 50M+ ($1M+)</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+          <button type="button" onclick="goToStep(1)" class="btn btn-secondary">← Back</button>
+          <button type="button" onclick="goToStep(3)" class="btn btn-primary" style="flex-grow:1;justify-content:center;">Next: Plan & Currency →</button>
+        </div>
+      </div>
+
+      <!-- STEP 3: Localization & Plan Selection -->
+      <div id="register-step-3" style="display:none;">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Base Currency</label>
+            <select class="form-control" name="currency">
+              <option value="PKR" selected>PKR - Pakistani Rupee (Rs)</option>
+              <option value="USD">USD - US Dollar ($)</option>
+              <option value="EUR">EUR - Euro (€)</option>
+              <option value="GBP">GBP - British Pound (£)</option>
+              <option value="AED">AED - UAE Dirham (AED)</option>
+              <option value="SAR">SAR - Saudi Riyal (SAR)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Interface Language</label>
+            <select class="form-control" name="language">
+              <option value="en" selected>🇺🇸 English</option>
+              <option value="ur">🇵🇰 Urdu/Hindi</option>
+              <option value="ar">🇦🇪 Arabic</option>
+              <option value="es">🇪🇸 Spanish</option>
+              <option value="fr">🇫🇷 French</option>
+              <option value="de">🇩🇪 German</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Choose 30-Day Free Trial Tier</label>
+          <div class="plan-grid">
+            <label class="plan-card starter" onclick="selectPlan('starter',this)">
+              <div style="font-size:1.4rem;margin-bottom:0.25rem;">🔵</div>
+              <div class="plan-name">Starter</div>
+              <div class="plan-desc">Rs. 1,500/mo</div>
+            </label>
+            <label class="plan-card partnership" onclick="selectPlan('partnership',this)">
+              <div style="font-size:1.4rem;margin-bottom:0.25rem;">🟣</div>
+              <div class="plan-name">Partnership</div>
+              <div class="plan-desc">Rs. 3,500/mo</div>
+            </label>
+            <label class="plan-card corporate selected" onclick="selectPlan('corporate',this)">
+              <div style="font-size:1.4rem;margin-bottom:0.25rem;">🟡</div>
+              <div class="plan-name">Corporate</div>
+              <div class="plan-desc">Rs. 8,500/mo</div>
+            </label>
+          </div>
+          <input type="hidden" name="plan" id="plan-input" value="corporate">
+        </div>
+
+        <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+          <button type="button" onclick="goToStep(2)" class="btn btn-secondary">← Back</button>
+          <button type="submit" class="btn btn-primary btn-lg" style="flex-grow:1;justify-content:center;">🚀 Complete Registration & Start 30-Day Free Trial →</button>
+        </div>
+      </div>
+    </form>
+
+    <p style="text-align:center;font-size:0.72rem;color:var(--text-3);margin-top:1.5rem;">
+      By signing up, you agree to our Terms of Service. Nexus ERP stores your data securely.
+    </p>
+  </div>
+</div>
+
+<script>
+function switchTab(tab) {
+  const tabs = document.querySelectorAll('.auth-tab');
+  tabs[0].classList.toggle('active', tab === 'login');
+  tabs[1].classList.toggle('active', tab === 'register');
+  document.getElementById('login-form').style.display    = tab === 'login' ? '' : 'none';
+  document.getElementById('register-form').style.display = tab === 'register' ? '' : 'none';
+}
+
+function goToStep(stepNum) {
+  document.getElementById('register-step-1').style.display = stepNum === 1 ? '' : 'none';
+  document.getElementById('register-step-2').style.display = stepNum === 2 ? '' : 'none';
+  document.getElementById('register-step-3').style.display = stepNum === 3 ? '' : 'none';
+
+  document.getElementById('step-tab-1').className = 'step-badge ' + (stepNum >= 1 ? 'active-step' : '');
+  document.getElementById('step-tab-2').className = 'step-badge ' + (stepNum >= 2 ? 'active-step' : '');
+  document.getElementById('step-tab-3').className = 'step-badge ' + (stepNum >= 3 ? 'active-step' : '');
+}
+
+function selectPlan(plan, el) {
+  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('plan-input').value = plan;
+}
+
+function quickLogin(username, password) {
+  document.getElementById('login-username').value = username;
+  document.getElementById('login-password').value = password;
+  document.getElementById('login-form').submit();
+}
+</script>
+</body>
+</html>

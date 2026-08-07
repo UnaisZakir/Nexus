@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Financial Reports{% endblock %}
+{% block page_title %}Financial Reports{% endblock %}
+
+{% block content %}
+<!-- Tab Navigation -->
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;border-bottom:1px solid var(--border);padding-bottom:0.5rem;">
+  <div style="display:flex;gap:0.5rem;">
+    <button class="btn btn-primary btn-sm report-tab active" onclick="showReport('pl', this)">📈 Profit & Loss</button>
+    <button class="btn btn-secondary btn-sm report-tab" onclick="showReport('bs', this)">🏛️ Balance Sheet</button>
+    <button class="btn btn-secondary btn-sm report-tab" onclick="showReport('tb', this)">⚖️ Trial Balance</button>
+  </div>
+  <div style="display:flex;gap:0.5rem;">
+    <button class="btn btn-secondary btn-sm" onclick="exportReport('pdf')" style="font-weight:600;">⬇️ Export PDF</button>
+    <button class="btn btn-secondary btn-sm" onclick="exportReport('excel')" style="font-weight:600;">⬇️ Export Excel</button>
+  </div>
+</div>
+
+<!-- PROFIT & LOSS -->
+<div id="report-pl" class="report-section">
+  <div class="card" style="max-width:760px;">
+    <div style="text-align:center;margin-bottom:2rem;">
+      <h2 style="font-size:1.5rem;font-weight:800;">Profit & Loss Statement</h2>
+      <p style="color:var(--text-2);font-size:0.82rem;">Income Statement — All Periods</p>
+    </div>
+
+    <div style="margin-bottom:1.5rem;">
+      <div style="font-weight:700;font-size:1rem;color:var(--success);margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border);">REVENUE</div>
+      {% for a in revenues %}
+      <div style="display:flex;justify-content:space-between;padding:0.4rem 0.5rem;font-size:0.875rem;">
+        <span style="color:var(--text-2);">{{ a.code }} — {{ a.name }}</span>
+        <span style="font-weight:500;">${{ "%.2f"|format(a.balance) }}</span>
+      </div>
+      {% endfor %}
+      <div style="display:flex;justify-content:space-between;padding:0.75rem 0.5rem;font-weight:700;border-top:1px solid var(--border);margin-top:0.5rem;font-size:0.95rem;">
+        <span>Total Revenue</span><span style="color:var(--success);">${{ "%.2f"|format(total_rev) }}</span>
+      </div>
+    </div>
+
+    <div style="margin-bottom:1.5rem;">
+      <div style="font-weight:700;font-size:1rem;color:var(--danger);margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border);">EXPENSES</div>
+      {% for a in expenses %}
+      <div style="display:flex;justify-content:space-between;padding:0.4rem 0.5rem;font-size:0.875rem;">
+        <span style="color:var(--text-2);">{{ a.code }} — {{ a.name }}</span>
+        <span style="font-weight:500;">${{ "%.2f"|format(a.balance) }}</span>
+      </div>
+      {% endfor %}
+      <div style="display:flex;justify-content:space-between;padding:0.75rem 0.5rem;font-weight:700;border-top:1px solid var(--border);margin-top:0.5rem;font-size:0.95rem;">
+        <span>Total Expenses</span><span style="color:var(--danger);">${{ "%.2f"|format(total_exp) }}</span>
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:space-between;padding:1.25rem;background:{% if net_profit >= 0 %}rgba(16,185,129,0.1){% else %}rgba(239,68,68,0.1){% endif %};border:2px solid {% if net_profit >= 0 %}rgba(16,185,129,0.3){% else %}rgba(239,68,68,0.3){% endif %};border-radius:var(--radius-sm);">
+      <span style="font-size:1.1rem;font-weight:800;">NET {% if net_profit >= 0 %}PROFIT{% else %}LOSS{% endif %}</span>
+      <span style="font-size:1.4rem;font-weight:800;color:{% if net_profit >= 0 %}var(--success){% else %}var(--danger){% endif %};">${{ "%.2f"|format(net_profit|abs) }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- BALANCE SHEET -->
+<div id="report-bs" class="report-section" style="display:none;">
+  <div class="grid-2">
+    <div class="card">
+      <div style="font-weight:700;font-size:1rem;color:var(--blue,#3b82f6);margin-bottom:1rem;">ASSETS</div>
+      {% for a in assets %}
+      <div style="display:flex;justify-content:space-between;padding:0.4rem 0;font-size:0.875rem;border-bottom:1px solid var(--border);">
+        <span style="color:var(--text-2);">{{ a.name }}</span>
+        <span>${{ "%.2f"|format(a.balance) }}</span>
+      </div>
+      {% endfor %}
+      <div style="display:flex;justify-content:space-between;padding:0.75rem 0;font-weight:700;border-top:2px solid var(--border-2);margin-top:0.5rem;">
+        <span>Total Assets</span><span style="color:var(--accent);">${{ "%.2f"|format(total_assets) }}</span>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:1.25rem;">
+        <div style="font-weight:700;font-size:1rem;color:var(--danger);margin-bottom:1rem;">LIABILITIES</div>
+        {% for a in liabilities %}
+        <div style="display:flex;justify-content:space-between;padding:0.4rem 0;font-size:0.875rem;border-bottom:1px solid var(--border);">
+          <span style="color:var(--text-2);">{{ a.name }}</span><span>${{ "%.2f"|format(a.balance) }}</span>
+        </div>
+        {% endfor %}
+        <div style="display:flex;justify-content:space-between;padding:0.75rem 0;font-weight:700;border-top:2px solid var(--border-2);margin-top:0.5rem;">
+          <span>Total Liabilities</span><span style="color:var(--danger);">${{ "%.2f"|format(total_liab) }}</span>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-weight:700;font-size:1rem;color:var(--accent-3);margin-bottom:1rem;">EQUITY</div>
+        {% for a in equity_accts %}
+        <div style="display:flex;justify-content:space-between;padding:0.4rem 0;font-size:0.875rem;border-bottom:1px solid var(--border);">
+          <span style="color:var(--text-2);">{{ a.name }}</span><span>${{ "%.2f"|format(a.balance) }}</span>
+        </div>
+        {% endfor %}
+        <div style="display:flex;justify-content:space-between;padding:0.4rem 0;font-size:0.875rem;border-bottom:1px solid var(--border);">
+          <span style="color:var(--text-2);">Net Profit (Current)</span><span>${{ "%.2f"|format(net_profit) }}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:0.75rem 0;font-weight:700;border-top:2px solid var(--border-2);margin-top:0.5rem;">
+          <span>Total Equity</span><span style="color:var(--accent-3);">${{ "%.2f"|format(total_equity) }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:1.25rem;padding:1rem;background:{% if (total_assets|round(2)) == (total_liab + total_equity)|round(2) %}rgba(16,185,129,0.1){% else %}rgba(239,68,68,0.1){% endif %};border-radius:var(--radius-sm);text-align:center;font-weight:700;">
+    Assets = Liabilities + Equity → ${{ "%.2f"|format(total_assets) }} = ${{ "%.2f"|format(total_liab + total_equity) }} → {% if (total_assets|round(2)) == ((total_liab + total_equity)|round(2)) %}✅ BALANCED{% else %}⚠️ Check entries!{% endif %}
+  </div>
+</div>
+
+<!-- TRIAL BALANCE -->
+<div id="report-tb" class="report-section" style="display:none;">
+  <div class="table-wrapper">
+    <div class="table-header"><span class="table-title">⚖️ Trial Balance</span></div>
+    <table>
+      <thead><tr><th>Code</th><th>Account Name</th><th>Type</th><th style="text-align:right;">Debit ($)</th><th style="text-align:right;">Credit ($)</th></tr></thead>
+      <tbody>
+      {% for a in accounts %}
+      {% if a.balance != 0 %}
+      <tr>
+        <td><code style="color:var(--accent);">{{ a.code }}</code></td>
+        <td>{{ a.name }}</td>
+        <td><span class="badge badge-gray">{{ a.account_type }}</span></td>
+        <td style="text-align:right;">{% if a.account_type in ['Asset','Expense'] and a.balance > 0 %}<strong>${{ "%.2f"|format(a.balance) }}</strong>{% else %}—{% endif %}</td>
+        <td style="text-align:right;">{% if a.account_type in ['Liability','Equity','Revenue'] and a.balance > 0 %}<strong>${{ "%.2f"|format(a.balance) }}</strong>{% else %}—{% endif %}</td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="border-top:2px solid var(--border-2);">
+          <td colspan="3" style="font-weight:700;padding:1rem;">TOTALS</td>
+          <td style="text-align:right;font-weight:700;color:var(--accent);">${{ "%.2f"|format(total_debits) }}</td>
+          <td style="text-align:right;font-weight:700;color:var(--accent-3);">${{ "%.2f"|format(total_credits) }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let activeReport = 'pl';
+
+function showReport(id, btn) {
+  activeReport = id;
+  document.querySelectorAll('.report-section').forEach(s => s.style.display = 'none');
+  document.getElementById('report-' + id).style.display = 'block';
+  document.querySelectorAll('.report-tab').forEach(b => { b.className = 'btn btn-secondary btn-sm report-tab'; });
+  btn.className = 'btn btn-primary btn-sm report-tab active';
+}
+
+function exportReport(format) {
+  const url = `/api/reports/${format}?type=${activeReport}`;
+  window.open(url, '_blank');
+}
+</script>
+{% endblock %}

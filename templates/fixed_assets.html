@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Fixed Assets{% endblock %}
+{% block page_title %}Fixed Assets & Depreciation{% endblock %}
+
+{% block topbar_actions %}
+  <button class="btn btn-secondary btn-sm" onclick="openModal('addAssetModal')">➕ Add Fixed Asset</button>
+  <button class="btn btn-primary btn-sm" onclick="openModal('depreciateModal')">🔄 Run Depreciation</button>
+{% endblock %}
+
+{% block content %}
+<div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
+  <div class="kpi-card blue">
+    <div class="kpi-label">Total Cost</div>
+    <div class="kpi-value" id="kpi-total-cost">${{ "%.2f"|format(total_cost) }}</div>
+    <div class="kpi-sub">Total acquisition value of assets</div>
+  </div>
+  <div class="kpi-card red">
+    <div class="kpi-label">Accumulated Depreciation</div>
+    <div class="kpi-value" id="kpi-total-depr">-${{ "%.2f"|format(total_depr) }}</div>
+    <div class="kpi-sub">Total depreciated value over time</div>
+  </div>
+  <div class="kpi-card green">
+    <div class="kpi-label">Net Book Value</div>
+    <div class="kpi-value" id="kpi-net-book-value">${{ "%.2f"|format(net_book_value) }}</div>
+    <div class="kpi-sub">Remaining balance sheet value (Cost - Depr)</div>
+  </div>
+</div>
+
+<div class="table-wrapper">
+  <div class="table-header">
+    <span class="table-title">🏛️ Fixed Asset Registry</span>
+    <input class="form-control" id="asset-search" placeholder="🔍 Search assets..." style="width:220px;" oninput="filterTable('asset-search','asset-body')">
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Asset Name</th>
+        <th>Purchase Date</th>
+        <th style="text-align:right;">Cost ($)</th>
+        <th style="text-align:right;">Salvage Value ($)</th>
+        <th style="text-align:center;">Useful Life (Yrs)</th>
+        <th style="text-align:right;">Acc. Depr ($)</th>
+        <th style="text-align:right;">Book Value ($)</th>
+      </tr>
+    </thead>
+    <tbody id="asset-body">
+    {% for asset in assets %}
+      <tr>
+        <td style="font-weight:600;">{{ asset.name }}</td>
+        <td>{{ asset.purchase_date }}</td>
+        <td style="text-align:right;font-weight:500;">${{ "%.2f"|format(asset.cost) }}</td>
+        <td style="text-align:right;color:var(--text-2);">${{ "%.2f"|format(asset.salvage_value) }}</td>
+        <td style="text-align:center;font-weight:500;">{{ asset.useful_life }}</td>
+        <td style="text-align:right;color:var(--danger); font-weight:500;">-${{ "%.2f"|format(asset.accumulated_depreciation) }}</td>
+        <td style="text-align:right;color:var(--success);font-weight:700;">${{ "%.2f"|format(asset.cost - asset.accumulated_depreciation) }}</td>
+      </tr>
+    {% else %}
+      <tr>
+        <td colspan="7">
+          <div class="empty-state">
+            <div class="empty-icon">🏛️</div>
+            <p>No fixed assets registered yet.</p>
+          </div>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Add Asset Modal -->
+<div class="modal-overlay" id="addAssetModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🏛️ Add Fixed Asset</span>
+      <button class="modal-close" onclick="closeModal('addAssetModal')">×</button>
+    </div>
+    <form id="asset-form">
+      <div class="form-group">
+        <label class="form-label">Asset Name</label>
+        <input class="form-control" name="name" required placeholder="e.g. Office Macbook Pro">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Acquisition Cost ($)</label>
+          <input class="form-control" type="number" step="0.01" min="0" name="cost" required placeholder="0.00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Salvage Value ($)</label>
+          <input class="form-control" type="number" step="0.01" min="0" name="salvage_value" value="0.00" placeholder="0.00">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Useful Life (Years)</label>
+          <input class="form-control" type="number" min="1" step="1" name="useful_life" required placeholder="5">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Purchase Date</label>
+          <input class="form-control" type="date" name="purchase_date" required id="asset-purchase-date">
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:0.5rem;" id="asset-submit-btn">Register Asset</button>
+    </form>
+  </div>
+</div>
+
+<!-- Run Depreciation Modal -->
+<div class="modal-overlay" id="depreciateModal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🔄 Run Depreciation Engine</span>
+      <button class="modal-close" onclick="closeModal('depreciateModal')">×</button>
+    </div>
+    <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:1rem;">
+      This processes straight-line monthly depreciation for all registered fixed assets up to the selected period. It automatically creates adjusting double-entry journal entries (Dr. Depreciation Expense / Cr. Accumulated Depreciation).
+    </p>
+    <form id="depreciate-form">
+      <div class="form-group">
+        <label class="form-label">Depreciation Period (YYYY-MM)</label>
+        <input class="form-control" type="month" name="period" required id="depr-period">
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;" id="depreciate-submit-btn">Run & Post Adjustments</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.getElementById('asset-purchase-date').value = new Date().toISOString().split('T')[0];
+document.getElementById('depr-period').value = new Date().toISOString().substring(0, 7);
+
+document.getElementById('asset-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('asset-submit-btn');
+  btn.disabled = true; btn.textContent = 'Registering...';
+  const fd = new FormData(e.target);
+  const r = await fetch('/api/fixed_assets', { method:'POST', body: fd });
+  const d = await r.json();
+  if (d.success) {
+    toast(d.message, 'success');
+    closeModal('addAssetModal');
+    setTimeout(() => location.reload(), 800);
+  } else {
+    toast(d.error || 'Error adding asset', 'error');
+    btn.disabled = false; btn.textContent = 'Register Asset';
+  }
+});
+
+document.getElementById('depreciate-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('depreciate-submit-btn');
+  btn.disabled = true; btn.textContent = 'Processing Engine...';
+  const fd = new FormData(e.target);
+  const r = await fetch('/api/fixed_assets/depreciate', { method:'POST', body: fd });
+  const d = await r.json();
+  if (d.success) {
+    toast(d.message, 'success');
+    closeModal('depreciateModal');
+    setTimeout(() => location.reload(), 1000);
+  } else {
+    toast(d.error || 'Error executing engine', 'error');
+    btn.disabled = false; btn.textContent = 'Run & Post Adjustments';
+  }
+});
+</script>
+{% endblock %}

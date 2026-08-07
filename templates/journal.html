@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block title %}Journal Entries{% endblock %}
+{% block page_title %}Journal Entries{% endblock %}
+
+{% block topbar_actions %}
+  <button class="btn btn-primary btn-sm" onclick="openModal('journalModal')">+ New Entry</button>
+{% endblock %}
+
+{% block content %}
+<div class="table-wrapper" style="margin-bottom: 1.5rem;">
+  <div class="table-header">
+    <span class="table-title">📖 All Journal Entries</span>
+    <input class="form-control" id="je-search" placeholder="🔍 Search..." style="width:220px;" oninput="filterTable('je-search','je-body')">
+  </div>
+  <table>
+    <thead><tr><th>ID</th><th>Date</th><th>Description</th><th>Reference</th><th>Type</th><th>Amount (Dr)</th></tr></thead>
+    <tbody id="je-body">
+    {% for e in entries %}
+    <tr>
+      <td style="color:var(--text-3);">#{{ e.id }}</td>
+      <td>{{ e.date }}</td>
+      <td style="font-weight:500;">{{ e.description }}</td>
+      <td style="color:var(--text-3);">{{ e.reference or '—' }}</td>
+      <td>
+        {% if e.entry_type == 'invoice' %}<span class="badge badge-blue">Invoice</span>
+        {% elif e.entry_type == 'payroll' %}<span class="badge badge-purple">Payroll</span>
+        {% elif e.entry_type == 'payment' %}<span class="badge badge-green">Payment</span>
+        {% else %}<span class="badge badge-gray">Manual</span>{% endif %}
+      </td>
+      <td style="font-weight:600;">${{ "%.2f"|format(e.total or 0) }}</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📖</div><p>No journal entries yet.</p></div></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- New Journal Entry Modal -->
+<div class="modal-overlay" id="journalModal">
+  <div class="modal" style="max-width:780px;">
+    <div class="modal-header">
+      <span class="modal-title">📖 New Journal Entry</span>
+      <button class="modal-close" onclick="closeModal('journalModal')">×</button>
+    </div>
+    <form id="journal-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date</label>
+          <input class="form-control" type="date" name="date" required id="je-date">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reference (optional)</label>
+          <input class="form-control" name="reference" placeholder="e.g. CHQ-001">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input class="form-control" name="description" placeholder="What is this entry for?" required>
+      </div>
+
+      <!-- Lines Table -->
+      <label class="form-label" style="margin-bottom:0.5rem;">Journal Lines (Debits must equal Credits)</label>
+      <table class="journal-lines-table" id="lines-table">
+        <thead><tr><th style="width:45%;">Account</th><th>Description</th><th>Debit ($)</th><th>Credit ($)</th><th></th></tr></thead>
+        <tbody id="lines-body">
+          <tr class="je-line">
+            <td>
+              <select class="form-control" name="account_id[]" required>
+                <option value="">— Select Account —</option>
+                {% for a in accounts %}<option value="{{ a.id }}">{{ a.code }} - {{ a.name }}</option>{% endfor %}
+              </select>
+            </td>
+            <td><input class="form-control" name="line_desc[]" placeholder="Line note"></td>
+            <td><input class="form-control" type="number" step="0.01" min="0" name="debit[]" placeholder="0.00" oninput="updateTotals()"></td>
+            <td><input class="form-control" type="number" step="0.01" min="0" name="credit[]" placeholder="0.00" oninput="updateTotals()"></td>
+            <td><button type="button" class="btn btn-danger btn-sm" onclick="removeLine(this)">✕</button></td>
+          </tr>
+          <tr class="je-line">
+            <td>
+              <select class="form-control" name="account_id[]" required>
+                <option value="">— Select Account —</option>
+                {% for a in accounts %}<option value="{{ a.id }}">{{ a.code }} - {{ a.name }}</option>{% endfor %}
+              </select>
+            </td>
+            <td><input class="form-control" name="line_desc[]" placeholder="Line note"></td>
+            <td><input class="form-control" type="number" step="0.01" min="0" name="debit[]" placeholder="0.00" oninput="updateTotals()"></td>
+            <td><input class="form-control" type="number" step="0.01" min="0" name="credit[]" placeholder="0.00" oninput="updateTotals()"></td>
+            <td><button type="button" class="btn btn-danger btn-sm" onclick="removeLine(this)">✕</button></td>
+          </tr>
+        </tbody>
+      </table>
+      
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:1rem 0;padding:0.75rem 1rem;background:var(--surface);border-radius:var(--radius-sm);">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="addLine()">+ Add Line</button>
+        <div style="display:flex;gap:2rem;font-size:0.875rem;">
+          <span>Total Debits: <strong id="total-dr" style="color:var(--accent);">$0.00</strong></span>
+          <span>Total Credits: <strong id="total-cr" style="color:var(--accent-3);">$0.00</strong></span>
+          <span id="balance-status" style="font-weight:600;color:var(--danger);">⚠ Unbalanced</span>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;" id="je-submit-btn">Post Journal Entry</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Set today's date by default
+document.getElementById('je-date').value = new Date().toISOString().split('T')[0];
+
+// Automatically open modal if requested in URL
+if (new URLSearchParams(window.location.search).get('new') === 'true') {
+  openModal('journalModal');
+}
+
+const accountOptions = `{% for a in accounts %}<option value="{{ a.id }}">{{ a.code }} - {{ a.name }}</option>{% endfor %}`;
+
+function addLine() {
+  const tbody = document.getElementById('lines-body');
+  const tr = document.createElement('tr');
+  tr.className = 'je-line';
+  tr.innerHTML = `
+    <td><select class="form-control" name="account_id[]" required><option value="">— Select Account —</option>${accountOptions}</select></td>
+    <td><input class="form-control" name="line_desc[]" placeholder="Line note"></td>
+    <td><input class="form-control" type="number" step="0.01" min="0" name="debit[]"  placeholder="0.00" oninput="updateTotals()"></td>
+    <td><input class="form-control" type="number" step="0.01" min="0" name="credit[]" placeholder="0.00" oninput="updateTotals()"></td>
+    <td><button type="button" class="btn btn-danger btn-sm" onclick="removeLine(this)">✕</button></td>`;
+  tbody.appendChild(tr);
+}
+
+function removeLine(btn) {
+  const rows = document.querySelectorAll('.je-line');
+  if (rows.length <= 2) { toast('Minimum 2 lines required','error'); return; }
+  btn.closest('tr').remove();
+  updateTotals();
+}
+
+function updateTotals() {
+  let dr = 0, cr = 0;
+  document.querySelectorAll('input[name="debit[]"]').forEach(i  => dr += parseFloat(i.value||0));
+  document.querySelectorAll('input[name="credit[]"]').forEach(i => cr += parseFloat(i.value||0));
+  document.getElementById('total-dr').textContent = '$' + dr.toFixed(2);
+  document.getElementById('total-cr').textContent = '$' + cr.toFixed(2);
+  const balanced = Math.abs(dr - cr) < 0.01;
+  const status = document.getElementById('balance-status');
+  status.textContent = balanced ? '✔ Balanced' : '⚠ Unbalanced';
+  status.style.color = balanced ? 'var(--success)' : 'var(--danger)';
+}
+
+document.getElementById('journal-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('je-submit-btn');
+  btn.disabled = true; btn.textContent = 'Posting...';
+  const fd = new FormData(e.target);
+  const r = await fetch('/api/journal', { method:'POST', body: fd });
+  const d = await r.json();
+  if (d.success) {
+    toast(d.message, 'success');
+    closeModal('journalModal');
+    setTimeout(() => location.reload(), 800);
+  } else {
+    toast(d.error || 'Error posting entry', 'error');
+    btn.disabled = false; btn.textContent = 'Post Journal Entry';
+  }
+});
+</script>
+{% endblock %}

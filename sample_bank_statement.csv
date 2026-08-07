@@ -1,0 +1,7 @@
+date,description,reference,amount,balance
+2024-01-01,Opening Balance,,10000.00,10000.00
+2024-01-05,Customer Invoice Payment,INV-0001,1500.00,11500.00
+2024-01-10,Salary Payout,PAY-01,-3000.00,8500.00
+2024-01-15,Office Supplies Purchase,REF-123,-250.00,8250.00
+2024-01-20,Vendor Payment,VND-99,-800.00,7450.00
+2024-01-25,Interest Received,INT-88,25.00,7475.00

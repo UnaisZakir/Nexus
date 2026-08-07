@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Nexus ERP{% endblock %} | The #1 AI-Powered Accounting & Enterprise Financial Platform</title>
+  <meta name="description" content="{% block meta_desc %}Nexus ERP is the world's #1 AI-powered accounting software and enterprise financial ERP. Features CEO & CFO admin panels, executive communication suite, double-entry ledger, automated invoicing, bank reconciliation, and AI financial advisor.{% endblock %}">
+  <meta name="keywords" content="Nexus ERP, accounting software, best accounting software, AI accountant, CFO dashboard, CEO admin panel, bank reconciliation, chart of accounts, double-entry bookkeeping, automated invoicing, financial reports, payroll management, cloud ERP, IFRS accounting, enterprise accounts software">
+  <meta name="author" content="Nexus ERP Systems Inc.">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <link rel="canonical" href="http://localhost:8000/">
+
+  <!-- OpenGraph Social Meta Tags -->
+  <meta property="og:site_name" content="Nexus ERP Platform">
+  <meta property="og:title" content="Nexus ERP — World's #1 AI Accounting & Enterprise Financial ERP">
+  <meta property="og:description" content="Transform enterprise finance with Nexus ERP. Built-in CEO/CFO admin panels, multi-auth governance, bank reconciliation, and real-time AI financial advice.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="http://localhost:8000/">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card Meta Tags -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Nexus ERP — #1 AI Accounting Software">
+  <meta name="twitter:description" content="Next-gen cloud accounting software for sole traders, partnerships, and corporate enterprises.">
+
+  <!-- JSON-LD Structured Data for Google #1 Search Ranking -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Nexus ERP",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Cross-platform",
+    "url": "http://localhost:8000/",
+    "author": {
+      "@type": "Organization",
+      "name": "Nexus ERP Global Enterprise"
+    },
+    "offers": {
+      "@type": "AggregateOffer",
+      "priceCurrency": "USD",
+      "lowPrice": "0",
+      "offerCount": "3"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "ratingCount": "1840"
+    },
+    "description": "Nexus ERP is the ultimate all-in-one AI accounting software offering CEO & CFO admin panels, executive thought exchange, double-entry bookkeeping, bank reconciliation, and real-time AI advisor."
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "Nexus ERP Global Enterprise",
+    "url": "http://localhost:8000/",
+    "knowsAbout": ["Accounting", "ERP", "Double-Entry Ledger", "Bank Reconciliation", "Financial Reports", "Tax Provisioning"]
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/styles.css">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+
+  <!-- ─── SIDEBAR ───────────────────────────────── -->
+  <nav class="sidebar">
+    <a href="/" class="logo" aria-label="Nexus ERP Home">
+      <div class="logo-icon">N</div>
+      <span class="logo-text">Nexus ERP</span>
+    </a>
+
+    <span class="nav-section">Executive Suite</span>
+    <a href="/ceo"           class="nav-link {% if active_page == 'ceo'           %}active{% endif %}"><span class="icon">👑</span> CEO Panel</a>
+    <a href="/cfo"           class="nav-link {% if active_page == 'cfo'           %}active{% endif %}"><span class="icon">💼</span> CFO Panel</a>
+    <a href="/communication" class="nav-link {% if active_page == 'communication' %}active{% endif %}"><span class="icon">💬</span> Executive Comm</a>
+
+    <span class="nav-section">Core Accounting</span>
+    <a href="/"              class="nav-link {% if active_page == 'dashboard'       %}active{% endif %}"><span class="icon">📊</span> Dashboard</a>
+    <a href="/accounts"      class="nav-link {% if active_page == 'accounts'        %}active{% endif %}"><span class="icon">🗂️</span> Chart of Accounts</a>
+    <a href="/journal"       class="nav-link {% if active_page == 'journal'         %}active{% endif %}"><span class="icon">📖</span> Journal Entries</a>
+    <a href="/fixed_assets"  class="nav-link {% if active_page == 'fixed_assets'    %}active{% endif %}"><span class="icon">🏛️</span> Fixed Assets</a>
+
+    <span class="nav-section">Sales & Purchasing</span>
+    <a href="/invoices"      class="nav-link {% if active_page == 'invoices'        %}active{% endif %}"><span class="icon">🧾</span> Invoicing</a>
+    <a href="/contacts"      class="nav-link {% if active_page == 'contacts'        %}active{% endif %}"><span class="icon">👤</span> Contacts</a>
+
+    <span class="nav-section">Banking</span>
+    <a href="/reconciliation" class="nav-link {% if active_page == 'reconciliation' %}active{% endif %}"><span class="icon">🏦</span> Bank Reconciliation</a>
+
+    <span class="nav-section">Reports & HR</span>
+    <a href="/reports"       class="nav-link {% if active_page == 'reports'         %}active{% endif %}"><span class="icon">📈</span> Financial Reports</a>
+    <a href="/payroll"       class="nav-link {% if active_page == 'payroll'         %}active{% endif %}"><span class="icon">👥</span> Payroll</a>
+    {% if user.plan in ['partnership', 'corporate'] or user.is_superadmin %}
+    <a href="/team"          class="nav-link {% if active_page == 'team'            %}active{% endif %}"><span class="icon">👥</span> HR Team Seats</a>
+    {% endif %}
+
+    <span class="nav-section">AI Intelligence</span>
+    <a href="/ai"            class="nav-link {% if active_page == 'ai'              %}active{% endif %}"><span class="icon">🤖</span> Nexus AI Advisor</a>
+
+    <span class="nav-section">SaaS Billing</span>
+    <a href="/subscription/checkout" class="nav-link {% if active_page == 'checkout' %}active{% endif %}"><span class="icon">💳</span> Free Trial & Billing</a>
+
+    {% if user.is_superadmin %}
+    <span class="nav-section" style="color:#ef4444;">App Creator</span>
+    <a href="/superadmin"    class="nav-link {% if active_page == 'superadmin'      %}active{% endif %}" style="color:#fca5a5;"><span class="icon">🛡️</span> SuperAdmin Panel</a>
+    {% endif %}
+
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar {% if user.role == 'CEO' %}role-ceo-avatar{% elif user.role == 'CFO' %}role-cfo-avatar{% else %}role-acct-avatar{% endif %}">
+          {{ (user.username or 'U')[0]|upper }}
+        </div>
+        <div class="user-info">
+          <div class="name">{{ user.username }}</div>
+          <div class="role-badge-pill role-{{ (user.role or 'Accountant')|lower }}">
+            {% if user.role == 'CEO' %}👑 CEO{% elif user.role == 'CFO' %}💼 CFO{% else %}📊 Accountant{% endif %}
+          </div>
+        </div>
+        <a href="/auth/logout" class="logout-icon-btn" title="Sign Out">🚪</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ─── MAIN ─────────────────────────────────── -->
+  <div class="main">
+    <!-- 30-DAY FREE TRIAL SAAS BANNER -->
+    {% if user.subscription_status == 'trialing' or not user.subscription_status %}
+    <div class="saas-trial-banner">
+      <div class="saas-trial-info">
+        <span class="trial-gift-icon">🎁</span>
+        <span><strong>30-Day Free Trial:</strong> {{ user.trial_days_left if user.trial_days_left is defined else 29 }} Days Remaining on {{ user.plan|capitalize }} Plan.</span>
+      </div>
+      <a href="/subscription/checkout" class="btn btn-warning btn-xs">💳 Upgrade Plan / Payment Gateway</a>
+    </div>
+    {% elif user.subscription_status == 'active' %}
+    <div class="saas-trial-banner active-sub-banner">
+      <div class="saas-trial-info">
+        <span class="trial-gift-icon">⭐</span>
+        <span><strong>Active Subscription:</strong> {{ user.plan|capitalize }} Plan (Pro License Active).</span>
+      </div>
+      <a href="/subscription/checkout" class="btn btn-secondary btn-xs">Manage Subscription</a>
+    </div>
+    {% endif %}
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:1rem;">
+        <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+      </div>
+      <div class="topbar-actions">
+        <!-- Global Currency & Language Preferences Form -->
+        <form action="/api/user/preferences" method="POST" class="role-switcher-form">
+          <span style="font-size:0.75rem;font-weight:600;color:var(--text-3);">Language:</span>
+          <select name="language" class="role-select" onchange="this.form.submit()">
+            <option value="en" {% if user.language == 'en' or not user.language %}selected{% endif %}>🇺🇸 English</option>
+            <option value="es" {% if user.language == 'es' %}selected{% endif %}>🇪🇸 Español</option>
+            <option value="fr" {% if user.language == 'fr' %}selected{% endif %}>🇫🇷 Français</option>
+            <option value="de" {% if user.language == 'de' %}selected{% endif %}>🇩🇪 Deutsch</option>
+            <option value="ur" {% if user.language == 'ur' %}selected{% endif %}>🇵🇰 Urdu/Hindi</option>
+            <option value="ar" {% if user.language == 'ar' %}selected{% endif %}>🇦🇪 العربية</option>
+          </select>
+
+          <span style="font-size:0.75rem;font-weight:600;color:var(--text-3);margin-left:0.4rem;">Currency:</span>
+          <select name="currency" class="role-select" onchange="this.form.submit()">
+            <option value="USD" {% if user.currency == 'USD' or not user.currency %}selected{% endif %}>USD ($)</option>
+            <option value="EUR" {% if user.currency == 'EUR' %}selected{% endif %}>EUR (€)</option>
+            <option value="GBP" {% if user.currency == 'GBP' %}selected{% endif %}>GBP (£)</option>
+            <option value="PKR" {% if user.currency == 'PKR' %}selected{% endif %}>PKR (Rs)</option>
+            <option value="INR" {% if user.currency == 'INR' %}selected{% endif %}>INR (₹)</option>
+            <option value="AED" {% if user.currency == 'AED' %}selected{% endif %}>AED (AED)</option>
+            <option value="SAR" {% if user.currency == 'SAR' %}selected{% endif %}>SAR (SAR)</option>
+            <option value="CAD" {% if user.currency == 'CAD' %}selected{% endif %}>CAD ($)</option>
+            <option value="AUD" {% if user.currency == 'AUD' %}selected{% endif %}>AUD ($)</option>
+            <option value="JPY" {% if user.currency == 'JPY' %}selected{% endif %}>JPY (¥)</option>
+          </select>
+        </form>
+
+        <!-- Multi-Auth Quick Persona Switcher -->
+        <form action="/auth/switch_role" method="POST" class="role-switcher-form">
+          <span style="font-size:0.75rem;font-weight:600;color:var(--text-3);">Persona:</span>
+          <select name="new_role" class="role-select" onchange="this.form.submit()">
+            <option value="CEO" {% if user.role == 'CEO' %}selected{% endif %}>👑 CEO Mode</option>
+            <option value="CFO" {% if user.role == 'CFO' %}selected{% endif %}>💼 CFO Mode</option>
+            <option value="Accountant" {% if user.role == 'Accountant' or not user.role %}selected{% endif %}>📊 Accountant Mode</option>
+          </select>
+        </form>
+        <span class="date" id="live-date"></span>
+        {% block topbar_actions %}{% endblock %}
+      </div>
+    </div>
+
+    <!-- Page Content -->
+    <div class="page fade-up">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+
+  <!-- ─── FLOATING AI BUTTON ────────────────────── -->
+  <button class="ai-fab" id="ai-fab-btn" title="Chat with Nexus AI">🤖</button>
+
+  <!-- ─── AI PANEL ──────────────────────────────── -->
+  <div class="ai-panel" id="ai-panel">
+    <div class="ai-panel-header">
+      <div class="ai-avatar">🤖</div>
+      <div class="info">
+        <div class="name">Nexus AI Advisor</div>
+        <div class="status">● Online · Ready to help</div>
+      </div>
+    </div>
+    <div class="ai-messages" id="ai-messages">
+      <div class="ai-msg ai">👋 Hello! I'm Nexus AI, your personal financial advisor. Ask me anything about your finances, accounting concepts, or how to improve your business!</div>
+    </div>
+    <div class="ai-input-row">
+      <input class="ai-input" id="ai-input" type="text" placeholder="Ask me anything..." autocomplete="off">
+      <button class="ai-send" id="ai-send-btn">➤</button>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- REAL-TIME CURRENCY CONVERTER & MULTI-LANGUAGE SCRIPT -->
+  <script>
+  window.NEXUS_CURRENCY = "{{ user.currency_symbol or '$' }}";
+  window.NEXUS_RATE = parseFloat("{{ user.exchange_rate or 1.0 }}") || 1.0;
+  window.NEXUS_LANG = "{{ user.language or 'en' }}";
+
+  document.addEventListener("DOMContentLoaded", function() {
+    if (window.NEXUS_RATE && window.NEXUS_RATE !== 1.0) {
+      document.querySelectorAll('.kpi-value, .amount').forEach(function(el) {
+        let text = el.innerText.trim();
+        let match = text.match(/\$?([\d,]+\.?\d*)/);
+        if (match) {
+          let num = parseFloat(match[1].replace(/,/g, ''));
+          if (!isNaN(num)) {
+            let converted = num * window.NEXUS_RATE;
+            if (window.NEXUS_CURRENCY === 'Rs' || window.NEXUS_CURRENCY === 'PKR') {
+              el.innerText = 'Rs. ' + Math.round(converted).toLocaleString();
+            } else {
+              el.innerText = window.NEXUS_CURRENCY + ' ' + converted.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            }
+          }
+        }
+      });
+    }
+
+    if (window.NEXUS_LANG === 'ur' || window.NEXUS_LANG === 'ar') {
+      document.body.setAttribute('dir', 'rtl');
+    }
+  });
+  </script>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/static/js/app.js"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
+
