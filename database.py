@@ -16,8 +16,9 @@ from sqlalchemy.exc import IntegrityError
 
 load_dotenv()
 
-DEFAULT_MSSQL_URL = "mssql+pyodbc://@localhost/NexusERP?driver=ODBC+Driver+17+for+SQL+Server&trusted_connection=yes"
-DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_MSSQL_URL)
+default_sqlite = "/tmp/nexus.db" if os.name != "nt" else "nexus.db"
+DEFAULT_DB_URL = f"sqlite:///{default_sqlite}"
+DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_DB_URL)
 
 def _get_working_engine(url: str):
     connect_args = {"check_same_thread": False} if "sqlite" in url else {}
@@ -29,8 +30,8 @@ def _get_working_engine(url: str):
                 pass
             return eng
         except Exception:
-            # Fallback to local SQLite if MS SQL Server instance is not accessible
-            return create_engine("sqlite:///nexus.db", connect_args={"check_same_thread": False})
+            db_path = "/tmp/nexus.db" if os.name != "nt" else "nexus.db"
+            return create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
     return create_engine(url, connect_args=connect_args, pool_pre_ping=True)
 
 engine = _get_working_engine(DATABASE_URL)

@@ -9,4 +9,3 @@ openpyxl
 reportlab
 pandas
 numpy
-pyodbc
