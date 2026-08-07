@@ -1,6 +1,0 @@
-tests/
-*.pyc
-*.db
-.env
-.git
-.gitignore
