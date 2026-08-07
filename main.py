@@ -30,14 +30,20 @@ load_dotenv()
 
 app = FastAPI(title="Nexus ERP", description="The Ultimate AI-Powered Accounting Platform")
 
-# Boot DB
-db.init_db()
+# Boot DB safely
+try:
+    db.init_db()
+except Exception as e:
+    print(f"Database init warning: {e}")
 
 # Setup static files and templates
-os.makedirs("static/css", exist_ok=True)
-os.makedirs("static/js", exist_ok=True)
-os.makedirs("static/img", exist_ok=True)
-os.makedirs("templates", exist_ok=True)
+try:
+    os.makedirs("static/css", exist_ok=True)
+    os.makedirs("static/js", exist_ok=True)
+    os.makedirs("static/img", exist_ok=True)
+    os.makedirs("templates", exist_ok=True)
+except Exception:
+    pass
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
