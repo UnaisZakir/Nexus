@@ -125,7 +125,7 @@ async def register(
     target = "/ceo" if role == "CEO" else ("/cfo" if role == "CFO" else "/")
     resp = RedirectResponse(url=target, status_code=303)
     encoded = urllib.parse.quote(json.dumps(user_data))
-    resp.set_cookie("nexus_user", encoded, max_age=86400 * 7)
+    resp.set_cookie("nexus_user", encoded, max_age=86400 * 7, path="/", samesite="lax")
     return resp
 
 
@@ -141,7 +141,7 @@ async def login(request: Request, username: str = Form(...), password: str = For
     target_url = "/ceo" if role == "CEO" else ("/cfo" if role == "CFO" else "/")
     resp = RedirectResponse(url=target_url, status_code=303)
     encoded = urllib.parse.quote(json.dumps(user_data))
-    resp.set_cookie("nexus_user", encoded, max_age=86400 * 7)
+    resp.set_cookie("nexus_user", encoded, max_age=86400 * 7, path="/", samesite="lax")
     return resp
 
 @app.post("/auth/switch_role")
@@ -156,13 +156,13 @@ async def switch_role(request: Request, new_role: str = Form(...), session: Sess
     target = "/ceo" if new_role == "CEO" else ("/cfo" if new_role == "CFO" else "/")
     resp = RedirectResponse(url=target, status_code=303)
     encoded = urllib.parse.quote(json.dumps(user))
-    resp.set_cookie("nexus_user", encoded, max_age=86400 * 7)
+    resp.set_cookie("nexus_user", encoded, max_age=86400 * 7, path="/", samesite="lax")
     return resp
 
 @app.get("/auth/logout")
 async def logout():
     resp = RedirectResponse(url="/auth", status_code=303)
-    resp.delete_cookie("nexus_user")
+    resp.delete_cookie("nexus_user", path="/")
     return resp
 
 @app.get("/auth/login")
@@ -1783,7 +1783,7 @@ async def process_payment(
 
     resp = RedirectResponse(url="/subscription/checkout?success=true", status_code=303)
     encoded = urllib.parse.quote(json.dumps(user))
-    resp.set_cookie("nexus_user", encoded, max_age=86400 * 7)
+    resp.set_cookie("nexus_user", encoded, max_age=86400 * 7, path="/", samesite="lax")
     return resp
 
 @app.post("/api/user/preferences")
@@ -1809,7 +1809,7 @@ async def update_user_preferences(
 
     resp = RedirectResponse(url=request.headers.get("referer", "/"), status_code=303)
     encoded = urllib.parse.quote(json.dumps(user))
-    resp.set_cookie("nexus_user", encoded, max_age=86400 * 7)
+    resp.set_cookie("nexus_user", encoded, max_age=86400 * 7, path="/", samesite="lax")
     return resp
 
 
