@@ -7,3 +7,4 @@ nexus.db
 .git
 .gitignore
 README.md
+tests/
